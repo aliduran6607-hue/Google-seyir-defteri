@@ -3,6 +3,11 @@ package com.example.ui.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,6 +43,39 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     var showJsonDialog by remember { mutableStateOf(false) }
     var jsonTextState by remember { mutableStateOf("") }
     var dialogMode by remember { mutableStateOf(0) } // 0: Export, 1: Import
+    var selectedFileName by remember { mutableStateOf<String?>(null) }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { selectedUri ->
+            try {
+                val inputStream = context.contentResolver.openInputStream(selectedUri)
+                val jsonString = inputStream?.bufferedReader()?.use { it.readText() }
+                if (!jsonString.isNullOrBlank()) {
+                    jsonTextState = jsonString
+                    val fileName = try {
+                        val cursor = context.contentResolver.query(selectedUri, null, null, null, null)
+                        cursor?.use {
+                            if (it.moveToFirst()) {
+                                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                                if (nameIndex >= 0) it.getString(nameIndex) else "yedek_kutuphane.json"
+                            } else "yedek_kutuphane.json"
+                        } ?: "yedek_kutuphane.json"
+                    } catch (e: Exception) {
+                        "yedek_kutuphane.json"
+                    }
+                    selectedFileName = fileName
+                    viewModel.importBackupJson(jsonString)
+                    Toast.makeText(context, "✅ '$fileName' yedeği kütüphaneye başarıyla aktarıldı!", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "⚠️ Seçilen dosya boş veya okunamadı!", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "❌ Dosya okuma hatası: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val profileName by viewModel.profileName.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
@@ -343,6 +381,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         .clickable {
                             dialogMode = 1
                             jsonTextState = ""
+                            selectedFileName = null
                             showJsonDialog = true
                         },
                     verticalAlignment = Alignment.CenterVertically
@@ -351,7 +390,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "JSON İçe Aktar (Geri Yükle)", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Daha önce yedeklenen kütüphane dosyasını yükleyin", color = TextSecondary, fontSize = 11.sp)
+                        Text(text = "Cihazınızdaki yedek kütüphane (.json) dosyasını ekleyin", color = TextSecondary, fontSize = 11.sp)
                     }
                     Icon(imageVector = Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondary)
                 }
@@ -580,7 +619,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
             containerColor = DarkSurfaceVariant,
             title = {
                 Text(
-                    text = if (dialogMode == 0) "Kütüphane Yedeği (JSON)" else "Yedek İçe Aktar",
+                    text = if (dialogMode == 0) "Kütüphane Yedeği (JSON)" else "Yedek Dosyası İçe Aktar",
                     color = TextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -588,27 +627,117 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
             },
             text = {
                 Column {
-                    Text(
-                        text = if (dialogMode == 0) "Aşağıdaki metni kopyalayarak yedekleyebilirsiniz:" else "Yedek kütüphane JSON metnini yapıştırın:",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = jsonTextState,
-                        onValueChange = { jsonTextState = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp),
-                        readOnly = dialogMode == 0,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
-                            focusedContainerColor = DarkSurface,
-                            unfocusedContainerColor = DarkSurface
+                    if (dialogMode == 0) {
+                        Text(
+                            text = "Aşağıdaki kütüphane yedek metnini kopyalayarak saklayabilirsiniz:",
+                            color = TextSecondary,
+                            fontSize = 12.sp
                         )
-                    )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = jsonTextState,
+                            onValueChange = { jsonTextState = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(160.dp),
+                            readOnly = true,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedContainerColor = DarkSurface,
+                                unfocusedContainerColor = DarkSurface
+                            )
+                        )
+                    } else {
+                        Text(
+                            text = "Cihazınızda kayıtlı .json yedek dosyasını seçerek yükleyin:",
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Big Prominent "Select File" Button
+                        Button(
+                            onClick = { filePickerLauncher.launch("*/*") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = VioletPrimary)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FolderOpen,
+                                    contentDescription = "Dosya Seç",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "📁 Cihazdan JSON Dosyası Ekle",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
+                        if (selectedFileName != null) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = StatusWatched.copy(alpha = 0.15f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, StatusWatched)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = StatusWatched,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Yüklendi: $selectedFileName",
+                                        color = StatusWatched,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "veya JSON metnini manuel yapıştırın:",
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = jsonTextState,
+                            onValueChange = { jsonTextState = it },
+                            placeholder = { Text("JSON kodunu buraya yapıştırabilirsiniz...", fontSize = 11.sp, color = TextMuted) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedContainerColor = DarkSurface,
+                                unfocusedContainerColor = DarkSurface,
+                                focusedBorderColor = VioletPrimary,
+                                unfocusedBorderColor = DarkBorder
+                            )
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -617,14 +746,21 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         if (dialogMode == 0) {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                             clipboard.setPrimaryClip(ClipData.newPlainText("Yedek", jsonTextState))
+                            Toast.makeText(context, "Yedek kopyalandı!", Toast.LENGTH_SHORT).show()
                         } else {
-                            viewModel.importBackupJson(jsonTextState)
+                            if (jsonTextState.isNotBlank()) {
+                                viewModel.importBackupJson(jsonTextState)
+                                Toast.makeText(context, "Yedek içe aktarıldı!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Lütfen bir dosya seçin veya JSON metni yapıştırın", Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
                         }
                         showJsonDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = VioletPrimary)
                 ) {
-                    Text(text = if (dialogMode == 0) "Kopyala" else "Yükle")
+                    Text(text = if (dialogMode == 0) "Kopyala" else "Yükle ve Tamamla")
                 }
             },
             dismissButton = {

@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -99,7 +100,7 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     val isAdmin = MutableStateFlow(true)
 
     init {
-        // Clean up any initial pre-seeded demo items so user starts with a clean personal collection
+        // Clean up any initial pre-seeded demo items and auto-import user's personal backup data
         viewModelScope.launch {
             val demoIds = listOf(
                 "interstellar-movie", "breaking-bad-tv", "severance-tv", "dune2-movie",
@@ -108,6 +109,8 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
             demoIds.forEach { id ->
                 db.mediaDao().deleteById(id)
             }
+            // Auto import user backup library
+            importBackupJson(UserBackupData.initialUserBackupJson)
         }
     }
 
@@ -275,19 +278,114 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     fun importBackupJson(jsonStr: String) {
         viewModelScope.launch {
             try {
-                val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-                val type = Types.newParameterizedType(List::class.java, MediaItem::class.java)
-                val adapter = moshi.adapter<List<MediaItem>>(type)
-                val list = adapter.fromJson(jsonStr)
-                if (list != null) {
+                val list = parseAnyJsonBackup(jsonStr)
+                if (list.isNotEmpty()) {
                     list.forEach { item ->
                         repository.saveItemToCollection(item)
                     }
-                    _toastMessage.emit("${list.size} içerik başarıyla içe aktarıldı.")
+                    _toastMessage.emit("${list.size} içerik başarıyla kütüphaneye aktarıldı.")
+                } else {
+                    _toastMessage.emit("Geçersiz veya boş JSON dosyası!")
                 }
             } catch (e: Exception) {
-                _toastMessage.emit("Geçersiz JSON dosyası!")
+                _toastMessage.emit("Geçersiz JSON dosyası: ${e.localizedMessage}")
             }
+        }
+    }
+
+    private fun parseAnyJsonBackup(jsonStr: String): List<MediaItem> {
+        val resultList = mutableListOf<MediaItem>()
+        val trimmed = jsonStr.trim()
+        try {
+            if (trimmed.startsWith("{")) {
+                val rootObj = JSONObject(trimmed)
+                val array = if (rootObj.has("veriler")) {
+                    rootObj.getJSONArray("veriler")
+                } else if (rootObj.has("items")) {
+                    rootObj.getJSONArray("items")
+                } else {
+                    null
+                }
+
+                if (array != null) {
+                    for (i in 0 until array.length()) {
+                        val obj = array.getJSONObject(i)
+                        val rawId = obj.opt("id")?.toString() ?: "imp_$i"
+                        val isim = obj.optString("isim", obj.optString("title", "İsimsiz İçerik"))
+                        val poster = obj.optString("poster", obj.optString("posterUrl", "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop"))
+                        val turStr = obj.optString("tur", obj.optString("type", "Film"))
+                        val type = if (turStr.equals("Dizi", ignoreCase = true) || turStr.equals("TV", ignoreCase = true)) "TV" else "MOVIE"
+
+                        val durumStr = obj.optString("durum", obj.optString("watchStatus", "İzlendi"))
+                        val status = when (durumStr) {
+                            "İzlendi", "WATCHED" -> "WATCHED"
+                            "İzleniyor", "WATCHING" -> "WATCHING"
+                            "İzlenecek", "TO_WATCH" -> "TO_WATCH"
+                            else -> "WATCHED"
+                        }
+
+                        val userRating = if (obj.has("puan") && !obj.isNull("puan")) obj.optInt("puan")
+                        else if (obj.has("userRating") && !obj.isNull("userRating")) obj.optInt("userRating")
+                        else null
+
+                        val genresList = mutableListOf<String>()
+                        val catArr = obj.optJSONArray("kategoriler") ?: obj.optJSONArray("genres")
+                        if (catArr != null) {
+                            for (j in 0 until catArr.length()) {
+                                genresList.add(catArr.getString(j))
+                            }
+                        }
+                        if (genresList.isEmpty()) {
+                            genresList.add(if (type == "TV") "Dizi" else "Film")
+                        }
+
+                        val encodedName = try { java.net.URLEncoder.encode(isim, "UTF-8") } catch (e: Exception) { "Actor" }
+                        val avatar = "https://ui-avatars.com/api/?name=$encodedName&background=211B34&color=A855F7&size=200&bold=true"
+
+                        val item = MediaItem(
+                            id = rawId,
+                            title = isim,
+                            originalTitle = isim,
+                            type = type,
+                            year = 2024,
+                            runtime = if (type == "TV") "1+ Sezon" else "2sa 10dk",
+                            rating = 8.5f,
+                            posterUrl = poster,
+                            backdropUrl = poster,
+                            overview = "$isim - Kişisel Seyir Defteri Kütüphanenizde kayıtlı içerik.",
+                            genres = genresList,
+                            trailerUrl = "https://www.youtube.com/results?search_query=$encodedName",
+                            cast = listOf(
+                                CastMember(isim + " Oyuncusu", "Başrol", avatar)
+                            ),
+                            watchStatus = status,
+                            userRating = userRating,
+                            userNotes = "",
+                            watchedEpisodes = 0,
+                            totalEpisodes = if (type == "TV") 12 else 0
+                        )
+                        resultList.add(item)
+                    }
+                    return resultList
+                }
+            } else if (trimmed.startsWith("[")) {
+                val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                val type = Types.newParameterizedType(List::class.java, MediaItem::class.java)
+                val adapter = moshi.adapter<List<MediaItem>>(type)
+                val list = adapter.fromJson(trimmed)
+                if (list != null) return list
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return try {
+            val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+            val type = Types.newParameterizedType(List::class.java, MediaItem::class.java)
+            val adapter = moshi.adapter<List<MediaItem>>(type)
+            adapter.fromJson(jsonStr) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }
