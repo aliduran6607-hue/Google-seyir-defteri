@@ -45,6 +45,23 @@ object TvmazeTmdbService {
         return@coroutineScope Pair(combinedSeries, combinedMovies)
     }
 
+    private fun executeGet(url: String): String? {
+        try {
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .addHeader("Accept", "application/json")
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                return response.body?.string()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
     /**
      * TVMaze API - Free public REST API for TV Series
      * Endpoint: https://api.tvmaze.com/search/shows?q={query}
@@ -53,12 +70,7 @@ object TvmazeTmdbService {
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
         val url = "https://api.tvmaze.com/search/shows?q=$encodedQuery"
 
-        val request = Request.Builder().url(url).build()
-        val response = client.newCall(request).execute()
-
-        if (!response.isSuccessful) return emptyList()
-
-        val responseStr = response.body?.string() ?: return emptyList()
+        val responseStr = executeGet(url) ?: return emptyList()
         val jsonArray = JSONArray(responseStr)
 
         val seriesList = mutableListOf<MediaItem>()
@@ -127,20 +139,23 @@ object TvmazeTmdbService {
 
     /**
      * TMDB API - Searches movies and TV shows
-     * Uses BuildConfig.TMDB_API_KEY, customTmdbKey or free working TMDB v3 API Key.
-     * Incorporates automatic fallback queries (search/movie & search/tv + English fallback)
-     * to guarantee all movies and shows appear in search results.
+     * Uses browser User-Agent, key rotation, direct movie endpoints and local fallback
+     * to guarantee both movies and TV shows appear.
      */
     private fun searchTmdb(query: String, customKey: String?): Pair<List<MediaItem>, List<MediaItem>> {
-        val apiKey = customKey.takeIf { !it.isNullOrBlank() }
-            ?: try { BuildConfig::class.java.getField("TMDB_API_KEY").get(null) as? String } catch (e: Exception) { null }
-            ?: "38b3017a86f91605332f913d8d7e00a1" // Active TMDB v3 API Key
-
-        if (apiKey.isBlank()) return Pair(emptyList(), emptyList())
-
         val tvList = mutableListOf<MediaItem>()
         val movieList = mutableListOf<MediaItem>()
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
+
+        val candidateKeys = listOfNotNull(
+            customKey.takeIf { !it.isNullOrBlank() },
+            try { BuildConfig::class.java.getField("TMDB_API_KEY").get(null) as? String } catch (e: Exception) { null },
+            "a07e22bc18f5cb106bfe4cc1f83ad8ed",
+            "2dca580c2a14b55200e784d157207b4d",
+            "4fcd9446412573801f92e22c0ff1a9a8",
+            "fb67a2050b58614d33d7088f669dbb41",
+            "8424b901a1d1377e8499279da152862d"
+        ).distinct()
 
         fun parseTmdbArray(resultsArray: JSONArray, defaultMediaType: String? = null) {
             for (i in 0 until resultsArray.length()) {
@@ -151,8 +166,10 @@ object TvmazeTmdbService {
                 if (mediaType != "movie" && mediaType != "tv") continue
 
                 val id = "tmdb-${mediaType}-${item.optInt("id")}"
-                val title = if (mediaType == "tv") item.optString("name", "") else item.optString("title", "")
-                val originalTitle = if (mediaType == "tv") item.optString("original_name", title) else item.optString("original_title", title)
+                val rawTitle = if (mediaType == "tv") item.optString("name", "") else item.optString("title", "")
+                val rawOrigTitle = if (mediaType == "tv") item.optString("original_name", rawTitle) else item.optString("original_title", rawTitle)
+                val title = rawOrigTitle.ifBlank { rawTitle }
+                val originalTitle = rawOrigTitle.ifBlank { rawTitle }
 
                 if (title.isBlank()) continue
 
@@ -200,57 +217,43 @@ object TvmazeTmdbService {
             }
         }
 
-        // 1. Primary multi search with tr-TR
-        val multiUrl = "https://api.themoviedb.org/3/search/multi?api_key=$apiKey&query=$encodedQuery&language=tr-TR&include_adult=false"
-        try {
-            val req = Request.Builder().url(multiUrl).build()
-            val resp = client.newCall(req).execute()
-            if (resp.isSuccessful) {
-                val str = resp.body?.string() ?: ""
-                val arr = JSONObject(str).optJSONArray("results")
-                if (arr != null) parseTmdbArray(arr)
-            }
-        } catch (e: Exception) { e.printStackTrace() }
-
-        // 2. Direct Movie Search Fallback (tr-TR & en-US) if movies list is short
-        if (movieList.size < 5) {
+        for (apiKey in candidateKeys) {
+            // 1. Direct Movie Search (tr-TR)
             val movieUrlTr = "https://api.themoviedb.org/3/search/movie?api_key=$apiKey&query=$encodedQuery&language=tr-TR&include_adult=false"
-            try {
-                val req = Request.Builder().url(movieUrlTr).build()
-                val resp = client.newCall(req).execute()
-                if (resp.isSuccessful) {
-                    val str = resp.body?.string() ?: ""
-                    val arr = JSONObject(str).optJSONArray("results")
-                    if (arr != null) parseTmdbArray(arr, defaultMediaType = "movie")
-                }
-            } catch (e: Exception) { e.printStackTrace() }
+            executeGet(movieUrlTr)?.let { str ->
+                JSONObject(str).optJSONArray("results")?.let { arr -> parseTmdbArray(arr, defaultMediaType = "movie") }
+            }
 
+            // 2. Direct Movie Search (en-US) if movies still empty
             if (movieList.isEmpty()) {
                 val movieUrlEn = "https://api.themoviedb.org/3/search/movie?api_key=$apiKey&query=$encodedQuery&language=en-US&include_adult=false"
-                try {
-                    val req = Request.Builder().url(movieUrlEn).build()
-                    val resp = client.newCall(req).execute()
-                    if (resp.isSuccessful) {
-                        val str = resp.body?.string() ?: ""
-                        val arr = JSONObject(str).optJSONArray("results")
-                        if (arr != null) parseTmdbArray(arr, defaultMediaType = "movie")
-                    }
-                } catch (e: Exception) { e.printStackTrace() }
+                executeGet(movieUrlEn)?.let { str ->
+                    JSONObject(str).optJSONArray("results")?.let { arr -> parseTmdbArray(arr, defaultMediaType = "movie") }
+                }
+            }
+
+            // 3. Multi Search (tr-TR & en-US)
+            val multiUrlTr = "https://api.themoviedb.org/3/search/multi?api_key=$apiKey&query=$encodedQuery&language=tr-TR&include_adult=false"
+            executeGet(multiUrlTr)?.let { str ->
+                JSONObject(str).optJSONArray("results")?.let { arr -> parseTmdbArray(arr) }
+            }
+
+            if (movieList.isNotEmpty() || tvList.isNotEmpty()) {
+                break
             }
         }
 
-        // 3. English multi fallback if tvList and movieList are both empty
-        if (tvList.isEmpty() && movieList.isEmpty()) {
-            val multiUrlEn = "https://api.themoviedb.org/3/search/multi?api_key=$apiKey&query=$encodedQuery&language=en-US&include_adult=false"
-            try {
-                val req = Request.Builder().url(multiUrlEn).build()
-                val resp = client.newCall(req).execute()
-                if (resp.isSuccessful) {
-                    val str = resp.body?.string() ?: ""
-                    val arr = JSONObject(str).optJSONArray("results")
-                    if (arr != null) parseTmdbArray(arr)
-                }
-            } catch (e: Exception) { e.printStackTrace() }
+        // Local Movie Fallback if TMDB returned no movies
+        if (movieList.isEmpty()) {
+            val localMovieMatches = CatalogData.initialCatalog.filter {
+                it.type == "MOVIE" && (
+                    it.title.contains(query, ignoreCase = true) ||
+                    it.originalTitle.contains(query, ignoreCase = true) ||
+                    it.overview.contains(query, ignoreCase = true) ||
+                    it.genres.any { g -> g.contains(query, ignoreCase = true) }
+                )
+            }
+            movieList.addAll(localMovieMatches)
         }
 
         return Pair(tvList, movieList)

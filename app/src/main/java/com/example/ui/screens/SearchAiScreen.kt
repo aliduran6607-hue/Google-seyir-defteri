@@ -50,6 +50,7 @@ fun SearchAiScreen(viewModel: SeyirDefteriViewModel) {
     val catalog by viewModel.catalogState.collectAsState()
 
     var activeTab by remember { mutableStateOf(0) } // 0: TVMaze & TMDB, 1: AI Bul, 2: Katalog Ara
+    var liveFilterType by remember { mutableStateOf(0) } // 0: Tümü, 1: Filmler, 2: Diziler
 
     val filteredCatalog = remember(searchQuery, catalog) {
         if (searchQuery.isBlank()) emptyList()
@@ -320,59 +321,101 @@ fun SearchAiScreen(viewModel: SeyirDefteriViewModel) {
                         }
                     }
                 } else if (liveSeries.isNotEmpty() || liveMovies.isNotEmpty()) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 100.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        if (liveSeries.isNotEmpty()) {
-                            item {
-                                SectionHeader(
-                                    title = "TV Dizileri (TVMaze & TMDB)",
-                                    subtitle = "'${liveQuery}' için ${liveSeries.size} dizi bulundu"
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Type Filter Chips
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = liveFilterType == 0,
+                                onClick = { liveFilterType = 0 },
+                                label = { Text("Tümü (${liveMovies.size + liveSeries.size})", fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = VioletPrimary,
+                                    selectedLabelColor = Color.White
                                 )
-                            }
-                            items(liveSeries.chunked(2)) { pair ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    pair.forEach { item ->
-                                        MediaCard(
-                                            item = item,
-                                            onClick = { viewModel.openDetail(item) },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    if (pair.size == 1) {
-                                        Spacer(modifier = Modifier.weight(1f))
+                            )
+                            FilterChip(
+                                selected = liveFilterType == 1,
+                                onClick = { liveFilterType = 1 },
+                                label = { Text("🎬 Filmler (${liveMovies.size})", fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = VioletPrimary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                            FilterChip(
+                                selected = liveFilterType == 2,
+                                onClick = { liveFilterType = 2 },
+                                label = { Text("📺 Diziler (${liveSeries.size})", fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = VioletPrimary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 100.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // 1. MOVIES FIRST
+                            if ((liveFilterType == 0 || liveFilterType == 1) && liveMovies.isNotEmpty()) {
+                                item {
+                                    SectionHeader(
+                                        title = "Sinema Filmleri (TMDB)",
+                                        subtitle = "'${liveQuery}' için ${liveMovies.size} film bulundu"
+                                    )
+                                }
+                                items(liveMovies.chunked(2)) { pair ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        pair.forEach { item ->
+                                            MediaCard(
+                                                item = item,
+                                                onClick = { viewModel.openDetail(item) },
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        if (pair.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        if (liveMovies.isNotEmpty()) {
-                            item {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                SectionHeader(
-                                    title = "Sinema Filmleri (TMDB)",
-                                    subtitle = "'${liveQuery}' için ${liveMovies.size} film bulundu"
-                                )
-                            }
-                            items(liveMovies.chunked(2)) { pair ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    pair.forEach { item ->
-                                        MediaCard(
-                                            item = item,
-                                            onClick = { viewModel.openDetail(item) },
-                                            modifier = Modifier.weight(1f)
-                                        )
+                            // 2. TV SERIES SECOND
+                            if ((liveFilterType == 0 || liveFilterType == 2) && liveSeries.isNotEmpty()) {
+                                item {
+                                    if (liveMovies.isNotEmpty() && (liveFilterType == 0)) {
+                                        Spacer(modifier = Modifier.height(12.dp))
                                     }
-                                    if (pair.size == 1) {
-                                        Spacer(modifier = Modifier.weight(1f))
+                                    SectionHeader(
+                                        title = "TV Dizileri (TVMaze & TMDB)",
+                                        subtitle = "'${liveQuery}' için ${liveSeries.size} dizi bulundu"
+                                    )
+                                }
+                                items(liveSeries.chunked(2)) { pair ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        pair.forEach { item ->
+                                            MediaCard(
+                                                item = item,
+                                                onClick = { viewModel.openDetail(item) },
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        if (pair.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
                                 }
                             }

@@ -90,6 +90,9 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     // Language state ("tr" or "en")
     val selectedLanguage = MutableStateFlow("tr")
 
+    // Theme state (true: Dark, false: Light)
+    val isDarkMode = MutableStateFlow(true)
+
     init {
         // Seed initial items to DB if database is empty so user starts with saved items
         viewModelScope.launch {
@@ -146,12 +149,12 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
         _liveSearchQuery.value = query
         liveSearchJob?.cancel()
         val trimmed = query.trim()
-        if (trimmed.length >= 2) {
+        if (trimmed.isNotEmpty()) {
             liveSearchJob = viewModelScope.launch {
-                delay(350) // 350ms debounced search as user types letters
+                delay(300) // 300ms debounced search as user types letters
                 performLiveSearch(trimmed, showToast = false)
             }
-        } else if (trimmed.isEmpty()) {
+        } else {
             _liveSeriesResults.value = emptyList()
             _liveMovieResults.value = emptyList()
         }

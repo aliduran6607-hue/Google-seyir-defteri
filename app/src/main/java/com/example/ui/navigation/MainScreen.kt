@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -142,23 +143,28 @@ fun NavItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.testTag("nav_item_${label.lowercase()}")
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp)
+            .testTag("nav_item_${label.lowercase()}"),
+        contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                tint = if (isSelected) VioletPrimary else TextMuted,
+                tint = if (isSelected) VioletPrimary else TextSecondary,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,
-                color = if (isSelected) VioletLight else TextMuted,
-                fontSize = 9.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                color = if (isSelected) VioletLight else TextSecondary,
+                fontSize = 10.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                maxLines = 1
             )
         }
     }

@@ -44,6 +44,11 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     val weeklyNotify by viewModel.weeklyDigestNotify.collectAsState()
     val selectedLang by viewModel.selectedLanguage.collectAsState()
     val customTmdbKey by viewModel.customTmdbKey.collectAsState()
+    val isDarkMode by viewModel.isDarkMode.collectAsState()
+
+    LaunchedEffect(isDarkMode) {
+        AppThemeState.isDark = isDarkMode
+    }
 
     Column(
         modifier = Modifier
@@ -294,6 +299,81 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // App Theme Section
+        Text(text = if (selectedLang == "tr") "Uygulama Teması" else "App Theme", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = Brush.linearGradient(listOf(DarkBorder, DarkBorder)))
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Dark Theme Option
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.isDarkMode.value = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isDarkMode) VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isDarkMode) VioletPrimary else DarkBorder
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(text = "🌙", fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (selectedLang == "tr") "Koyu Tema" else "Dark Theme",
+                                color = if (isDarkMode) VioletLight else TextPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Light Theme Option
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.isDarkMode.value = false },
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (!isDarkMode) VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (!isDarkMode) VioletPrimary else DarkBorder
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(text = "☀️", fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (selectedLang == "tr") "Açık Tema" else "Light Theme",
+                                color = if (!isDarkMode) VioletLight else TextPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         // Live API Data Services Info Card
         Text(text = if (selectedLang == "tr") "Canlı Veri Servisleri" else "Live Data Services", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(8.dp))
@@ -352,7 +432,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(text = "Seyir Defteri v1.0.0", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(text = "Türk sinemaseverler için özel tasarlanmış kütüphane uygulaması.", color = TextSecondary, fontSize = 11.sp)
+                Text(text = "Created by Muhammed Ali Duran", color = TextSecondary, fontSize = 11.sp)
             }
         }
     }

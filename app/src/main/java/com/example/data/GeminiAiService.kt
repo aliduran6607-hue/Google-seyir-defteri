@@ -29,26 +29,32 @@ object GeminiAiService {
 
         try {
             val jsonPrompt = """
-                You are a movie and TV show recommendation system for Turkish cinephiles.
-                User theme query: "$prompt"
-                Return a JSON object with two arrays:
-                "series": array of 8 recommended TV series
-                "movies": array of 8 recommended Movies
+                You are an expert global film & TV recommendation engine for Turkish cinephiles.
 
-                Each item inside series or movies must have these exact JSON fields:
-                "id": string (unique slug e.g. "shawshank-movie")
-                "title": string (Turkish or widely known title)
-                "originalTitle": string
-                "type": string ("TV" or "MOVIE")
-                "year": integer
-                "runtime": string (e.g. "2sa 22dk" or "4 Sezon")
-                "rating": float (e.g. 8.8)
-                "posterUrl": string (a high quality unsplash image URL like "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop")
-                "backdropUrl": string (a high quality unsplash image URL)
-                "overview": string (detailed plot summary in Turkish)
-                "genres": array of strings (e.g. ["Suç", "Dram"])
+                CRITICAL RULES:
+                1. The user query can be in Turkish OR English. You MUST understand both languages and search across the ENTIRE global database (Hollywood, European, Asian, Turkish). NEVER limit results to only Turkish productions unless specifically asked.
+                2. If user writes in Turkish (e.g. "hapishane dizisi", "uzay filmi", "ters köşe filmler", "80ler bilim kurgu"), translate the intent to English internally and find the best matching international titles.
+                3. If user writes in English (e.g. "prison drama", "space movies", "mind bending thriller"), also include titles that Turkish audiences know by their official Turkish names.
+                4. For EACH result, provide:
+                   - "title": The original English (or native language) title (e.g., "Spider-Man", "Inception", "Breaking Bad"). ALWAYS use the original title.
+                   - "originalTitle": The original English (or native language) title.
+                   - "overview": A detailed, compelling plot summary written in Turkish.
+                   - "genres": Genre names in Turkish (e.g. "Bilim Kurgu", "Gerilim", "Suç", "Dram").
+                   - "type": "TV" or "MOVIE"
+                   - "year": integer
+                   - "runtime": string (e.g. "2sa 22dk" for movies, "4 Sezon (39 Bölüm)" for series)
+                   - "rating": float (IMDb-style, 0-10)
+                   - "posterUrl": a high-quality cinematic image URL (e.g. "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop")
+                   - "backdropUrl": a high-quality cinematic wide image URL (e.g. "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=1200&auto=format&fit=crop")
+                   - "id": unique slug (e.g. "the-shawshank-redemption-movie")
 
-                ONLY return valid raw JSON without markdown codeblock backticks if possible, or inside ```json.
+                User query: "$prompt"
+
+                Return ONLY a valid raw JSON object (no markdown code blocks, no backticks) with this exact structure:
+                {
+                  "series": [array of 8 TV series objects],
+                  "movies": [array of 8 movie objects]
+                }
             """.trimIndent()
 
             val requestJson = JSONObject().apply {
@@ -116,7 +122,9 @@ object GeminiAiService {
             if (genres.isEmpty()) genres.add("Dram")
 
             val type = obj.optString("type", defaultType)
-            val title = obj.optString("title", "Bilinmeyen Başlık")
+            val rawTitle = obj.optString("title", "Bilinmeyen Başlık")
+            val origTitle = obj.optString("originalTitle", rawTitle)
+            val title = origTitle.ifBlank { rawTitle }
 
             list.add(
                 MediaItem(
