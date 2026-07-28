@@ -27,9 +27,9 @@ object CatalogData {
                 CastMember("Anne Hathaway", "Brand", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop"),
                 CastMember("Jessica Chastain", "Murph", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 10,
-            userNotes = "Sinema tarihinin en iyi görsel ve müzikal şaheserlerinden biri. Zimmer müziği tüyleri diken diken ediyor.",
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
             watchedEpisodes = 0,
             totalEpisodes = 0
         ),
@@ -50,10 +50,10 @@ object CatalogData {
                 CastMember("Bryan Cranston", "Walter White", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
                 CastMember("Aaron Paul", "Jesse Pinkman", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 10,
-            userNotes = "Televizyon tarihinin en kusursuz finallerinden birine sahip şaheser.",
-            watchedEpisodes = 62,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 62
         ),
         MediaItem(
@@ -66,17 +66,17 @@ object CatalogData {
             rating = 8.7f,
             posterUrl = "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop",
             backdropUrl = "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&auto=format&fit=crop",
-            overview = "Lumon Industries çalışanları, iş ve kişisel anılarını tıbbi operasyonla birbirinden ayıran 'Severance' prosedürüne katılırlar. İş benlikleri dış dünya hakkında hiçbir şey bilmez.",
+            overview = "Lumon Industries çalışanları, iş ve kişisel anılarını tıbbi operasyonla birbirinden ayıran 'Severance' prosedürüne katırlar. İş benlikleri dış dünya hakkında hiçbir şey bilmez.",
             genres = listOf("Psikolojik", "Bilim Kurgu", "Gerilim"),
             trailerUrl = "https://www.youtube.com/watch?v=xEQP4VVuyrY",
             cast = listOf(
                 CastMember("Adam Scott", "Mark Scout", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop"),
                 CastMember("Patricia Arquette", "Harmony Cobel", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHING",
-            userRating = 9,
-            userNotes = "Beyin bükücü senaryo, beyaz ofis atmosferi büyüleyici derecede klostrofobik.",
-            watchedEpisodes = 9,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 19
         ),
         MediaItem(
@@ -96,9 +96,9 @@ object CatalogData {
                 CastMember("Timothée Chalamet", "Paul Atreides", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop"),
                 CastMember("Zendaya", "Chani", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "TO_WATCH",
+            watchStatus = null,
             userRating = null,
-            userNotes = "Sinematografisi müthiş.",
+            userNotes = "",
             watchedEpisodes = 0,
             totalEpisodes = 0
         ),
@@ -119,9 +119,9 @@ object CatalogData {
                 CastMember("Cillian Murphy", "J. Robert Oppenheimer", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
                 CastMember("Robert Downey Jr.", "Lewis Strauss", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 9,
-            userNotes = "Ses tasarımı ve kurgusu büyüleyici.",
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
             watchedEpisodes = 0,
             totalEpisodes = 0
         ),
@@ -141,9 +141,9 @@ object CatalogData {
             cast = listOf(
                 CastMember("Louis Hofmann", "Jonas Kahnwald", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "TO_WATCH",
+            watchStatus = null,
             userRating = null,
-            userNotes = "Zaman yolculuğu kurgusunun zirvesi.",
+            userNotes = "",
             watchedEpisodes = 0,
             totalEpisodes = 26
         ),
@@ -164,10 +164,10 @@ object CatalogData {
                 CastMember("Wentworth Miller", "Michael Scofield", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
                 CastMember("Dominic Purcell", "Lincoln Burrows", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 9,
-            userNotes = "İlk sezonu dizi tarihinin en akıcı temposuna sahip.",
-            watchedEpisodes = 90,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 90
         ),
         MediaItem(
@@ -187,10 +187,10 @@ object CatalogData {
                 CastMember("Feyyaz Yiğit", "Yılmaz", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
                 CastMember("Kıvanç Kılınç", "İlkkan", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHING",
-            userRating = 10,
-            userNotes = "Absürt mizahın harika bir örneği.",
-            watchedEpisodes = 42,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 52
         ),
         MediaItem(
@@ -210,10 +210,10 @@ object CatalogData {
                 CastMember("Haluk Bilginer", "Agâh Beyoğlu", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
                 CastMember("Cansu Dere", "Nevra Elmas", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 10,
-            userNotes = "Haluk Bilginer'e Emmy kazandıran muhteşem performans.",
-            watchedEpisodes = 22,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 22
         ),
         MediaItem(
@@ -233,10 +233,10 @@ object CatalogData {
                 CastMember("Gökçe Bahadır", "Matilda", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop"),
                 CastMember("Barış Arduç", "İsmet", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop")
             ),
-            watchStatus = "WATCHED",
-            userRating = 9,
-            userNotes = "Dönem atmosferi harika.",
-            watchedEpisodes = 20,
+            watchStatus = null,
+            userRating = null,
+            userNotes = "",
+            watchedEpisodes = 0,
             totalEpisodes = 20
         )
     )

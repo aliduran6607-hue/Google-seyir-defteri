@@ -93,16 +93,25 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     // Theme state (true: Dark, false: Light)
     val isDarkMode = MutableStateFlow(true)
 
+    // User Profile Name State
+    val profileName = MutableStateFlow("Sinefil Kullanıcı")
+
     init {
-        // Seed initial items to DB if database is empty so user starts with saved items
+        // Clean up any initial pre-seeded demo items so user starts with a clean personal collection
         viewModelScope.launch {
-            db.mediaDao().getAllUserItems().firstOrNull().let { list ->
-                if (list.isNullOrEmpty()) {
-                    CatalogData.initialCatalog.filter { it.watchStatus != null }.forEach { item ->
-                        repository.saveItemToCollection(item)
-                    }
-                }
+            val demoIds = listOf(
+                "interstellar-movie", "breaking-bad-tv", "severance-tv", "dune2-movie",
+                "oppenheimer-movie", "dark-tv", "prison-break-tv", "gibi-tv", "sahsiyet-tv", "kulup-tv"
+            )
+            demoIds.forEach { id ->
+                db.mediaDao().deleteById(id)
             }
+        }
+    }
+
+    fun updateProfileName(name: String) {
+        if (name.isNotBlank()) {
+            profileName.value = name.trim()
         }
     }
 

@@ -39,6 +39,10 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     var jsonTextState by remember { mutableStateOf("") }
     var dialogMode by remember { mutableStateOf(0) } // 0: Export, 1: Import
 
+    val profileName by viewModel.profileName.collectAsState()
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var tempNameText by remember { mutableStateOf("") }
+
     val newEpNotify by viewModel.newEpisodeNotify.collectAsState()
     val sequelNotify by viewModel.sequelMovieNotify.collectAsState()
     val weeklyNotify by viewModel.weeklyDigestNotify.collectAsState()
@@ -48,6 +52,45 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
 
     LaunchedEffect(isDarkMode) {
         AppThemeState.isDark = isDarkMode
+    }
+
+    if (showEditNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            title = { Text("Profil İsmini Düzenle", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                OutlinedTextField(
+                    value = tempNameText,
+                    onValueChange = { tempNameText = it },
+                    label = { Text("İsim veya Takma Ad") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = VioletPrimary,
+                        unfocusedBorderColor = DarkBorder
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.updateProfileName(tempNameText)
+                        showEditNameDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = VioletPrimary)
+                ) {
+                    Text("Kaydet")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditNameDialog = false }) {
+                    Text("İptal", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurface
+        )
     }
 
     Column(
@@ -75,25 +118,64 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = DarkSurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, VioletPrimary)
+            border = androidx.compose.foundation.BorderStroke(1.dp, VioletPrimary.copy(alpha = 0.5f))
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AsyncImage(
-                    model = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop",
-                    contentDescription = "Avatar",
+                // Personal Avatar Circle Icon
+                Box(
                     modifier = Modifier
                         .size(80.dp)
                         .clip(CircleShape)
-                        .border(2.dp, VioletPrimary, CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+                        .background(Brush.linearGradient(listOf(VioletPrimary, VioletLight)))
+                        .border(2.dp, VioletLight, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profil Resmi",
+                        tint = Color.White,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                Text(text = "Ahmet Yılmaz", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = profileName,
+                        color = TextPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    IconButton(
+                        onClick = {
+                            tempNameText = profileName
+                            showEditNameDialog = true
+                        },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "İsmi Düzenle",
+                            tint = VioletPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                val userBadge = when {
+                    collection.isEmpty() -> "Yeni Sinefil"
+                    collection.size in 1..5 -> "Meraklı İzleyici"
+                    collection.size in 6..15 -> "Dizi & Film Sever"
+                    else -> "Usta Sinefil"
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
@@ -101,7 +183,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         color = AmberRating.copy(alpha = 0.2f)
                     ) {
                         Text(
-                            text = "Usta Sinefil",
+                            text = userBadge,
                             color = AmberRatingLight,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -109,12 +191,16 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Üye: Ocak 2024", color = TextSecondary, fontSize = 11.sp)
+                    Text(
+                        text = "Kütüphane: ${collection.size} İçerik",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Firebase Cloud Sync Indicator
+                // Personal Database / Sync Indicator
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = DarkSurfaceVariant
@@ -123,9 +209,19 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(imageVector = Icons.Default.CloudDone, contentDescription = null, tint = StatusWatched, modifier = Modifier.size(16.dp))
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = StatusWatched,
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Firebase Bulut Senkronizasyonu Aktif", color = StatusWatched, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Kişisel Kütüphane Veritabanı Hazır",
+                            color = StatusWatched,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
