@@ -93,8 +93,10 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     // Theme state (true: Dark, false: Light)
     val isDarkMode = MutableStateFlow(true)
 
-    // User Profile Name State
-    val profileName = MutableStateFlow("Sinefil Kullanıcı")
+    // User Profile & Admin States
+    val userEmail = MutableStateFlow("aliduran6607@gmail.com")
+    val profileName = MutableStateFlow("Ali Duran")
+    val isAdmin = MutableStateFlow(true)
 
     init {
         // Clean up any initial pre-seeded demo items so user starts with a clean personal collection

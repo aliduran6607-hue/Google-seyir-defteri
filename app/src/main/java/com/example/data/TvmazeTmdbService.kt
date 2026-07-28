@@ -129,7 +129,7 @@ object TvmazeTmdbService {
                     overview = cleanSummary,
                     genres = genres,
                     trailerUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode("$name trailer", "UTF-8")}",
-                    cast = CatalogData.sampleCast
+                    cast = getCastForMedia(name, "TV")
                 )
             )
         }
@@ -202,7 +202,7 @@ object TvmazeTmdbService {
                     overview = overview,
                     genres = mapTmdbGenreIds(item.optJSONArray("genre_ids")),
                     trailerUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode("$title fragman", "UTF-8")}",
-                    cast = CatalogData.sampleCast
+                    cast = getCastForMedia(title, if (mediaType == "tv") "TV" else "MOVIE")
                 )
 
                 if (mediaType == "tv") {
@@ -290,5 +290,123 @@ object TvmazeTmdbService {
             if (genreName != null) genres.add(genreName)
         }
         return genres.ifEmpty { listOf("Dram") }
+    }
+
+    private fun getCastForMedia(title: String, type: String): List<CastMember> {
+        val lower = title.lowercase()
+        return when {
+            lower.contains("interstellar") -> listOf(
+                CastMember("Matthew McConaughey", "Cooper", avatarUrl("Matthew McConaughey")),
+                CastMember("Anne Hathaway", "Brand", avatarUrl("Anne Hathaway")),
+                CastMember("Jessica Chastain", "Murph", avatarUrl("Jessica Chastain")),
+                CastMember("Michael Caine", "Prof. Brand", avatarUrl("Michael Caine"))
+            )
+            lower.contains("breaking bad") -> listOf(
+                CastMember("Bryan Cranston", "Walter White", avatarUrl("Bryan Cranston")),
+                CastMember("Aaron Paul", "Jesse Pinkman", avatarUrl("Aaron Paul")),
+                CastMember("Anna Gunn", "Skyler White", avatarUrl("Anna Gunn")),
+                CastMember("Bob Odenkirk", "Saul Goodman", avatarUrl("Bob Odenkirk"))
+            )
+            lower.contains("severance") -> listOf(
+                CastMember("Adam Scott", "Mark Scout", avatarUrl("Adam Scott")),
+                CastMember("Patricia Arquette", "Harmony Cobel", avatarUrl("Patricia Arquette")),
+                CastMember("Britt Lower", "Helly R.", avatarUrl("Britt Lower")),
+                CastMember("John Turturro", "Irving Bailiff", avatarUrl("John Turturro"))
+            )
+            lower.contains("dune") -> listOf(
+                CastMember("Timothée Chalamet", "Paul Atreides", avatarUrl("Timothée Chalamet")),
+                CastMember("Zendaya", "Chani", avatarUrl("Zendaya")),
+                CastMember("Rebecca Ferguson", "Lady Jessica", avatarUrl("Rebecca Ferguson")),
+                CastMember("Javier Bardem", "Stilgar", avatarUrl("Javier Bardem"))
+            )
+            lower.contains("oppenheimer") -> listOf(
+                CastMember("Cillian Murphy", "J. Robert Oppenheimer", avatarUrl("Cillian Murphy")),
+                CastMember("Emily Blunt", "Katherine Oppenheimer", avatarUrl("Emily Blunt")),
+                CastMember("Matt Damon", "Leslie Groves", avatarUrl("Matt Damon")),
+                CastMember("Robert Downey Jr.", "Lewis Strauss", avatarUrl("Robert Downey Jr."))
+            )
+            lower.contains("dark") -> listOf(
+                CastMember("Louis Hofmann", "Jonas Kahnwald", avatarUrl("Louis Hofmann")),
+                CastMember("Oliver Masucci", "Ulrich Nielsen", avatarUrl("Oliver Masucci")),
+                CastMember("Karoline Eichhorn", "Charlotte Doppler", avatarUrl("Karoline Eichhorn"))
+            )
+            lower.contains("prison break") -> listOf(
+                CastMember("Wentworth Miller", "Michael Scofield", avatarUrl("Wentworth Miller")),
+                CastMember("Dominic Purcell", "Lincoln Burrows", avatarUrl("Dominic Purcell")),
+                CastMember("Amaury Nolasco", "Fernando Sucre", avatarUrl("Amaury Nolasco")),
+                CastMember("Robert Knepper", "Theodore 'T-Bag' Bagwell", avatarUrl("Robert Knepper"))
+            )
+            lower.contains("gibi") -> listOf(
+                CastMember("Feyyaz Yiğit", "Yılmaz", avatarUrl("Feyyaz Yiğit")),
+                CastMember("Kıvanç Kılınç", "İlkkan", avatarUrl("Kıvanç Kılınç")),
+                CastMember("Ahmet Mümtaz Taylan", "Zafer", avatarUrl("Ahmet Mümtaz Taylan"))
+            )
+            lower.contains("şahsiyet") || lower.contains("sahsiyet") -> listOf(
+                CastMember("Haluk Bilginer", "Agâh Beyoğlu", avatarUrl("Haluk Bilginer")),
+                CastMember("Cansu Dere", "Nevra Elmas", avatarUrl("Cansu Dere")),
+                CastMember("Metin Akdülger", "Ateş Arbay", avatarUrl("Metin Akdülger"))
+            )
+            lower.contains("kulüp") || lower.contains("kulup") -> listOf(
+                CastMember("Gökçe Bahadır", "Matilda Baeva", avatarUrl("Gökçe Bahadır")),
+                CastMember("Barış Arduç", "İsmet Denizer", avatarUrl("Barış Arduç")),
+                CastMember("Salih Bademci", "Selim Songür", avatarUrl("Salih Bademci"))
+            )
+            lower.contains("spider") || lower.contains("örümcek") -> listOf(
+                CastMember("Tom Holland", "Peter Parker / Spider-Man", avatarUrl("Tom Holland")),
+                CastMember("Zendaya", "MJ", avatarUrl("Zendaya")),
+                CastMember("Benedict Cumberbatch", "Doctor Strange", avatarUrl("Benedict Cumberbatch"))
+            )
+            lower.contains("batman") || lower.contains("dark knight") -> listOf(
+                CastMember("Christian Bale", "Bruce Wayne / Batman", avatarUrl("Christian Bale")),
+                CastMember("Heath Ledger", "Joker", avatarUrl("Heath Ledger")),
+                CastMember("Gary Oldman", "Jim Gordon", avatarUrl("Gary Oldman"))
+            )
+            lower.contains("harry potter") -> listOf(
+                CastMember("Daniel Radcliffe", "Harry Potter", avatarUrl("Daniel Radcliffe")),
+                CastMember("Emma Watson", "Hermione Granger", avatarUrl("Emma Watson")),
+                CastMember("Rupert Grint", "Ron Weasley", avatarUrl("Rupert Grint"))
+            )
+            lower.contains("game of thrones") || lower.contains("got") -> listOf(
+                CastMember("Kit Harington", "Jon Snow", avatarUrl("Kit Harington")),
+                CastMember("Emilia Clarke", "Daenerys Targaryen", avatarUrl("Emilia Clarke")),
+                CastMember("Peter Dinklage", "Tyrion Lannister", avatarUrl("Peter Dinklage"))
+            )
+            lower.contains("stranger things") -> listOf(
+                CastMember("Millie Bobby Brown", "Eleven", avatarUrl("Millie Bobby Brown")),
+                CastMember("David Harbour", "Jim Hopper", avatarUrl("David Harbour")),
+                CastMember("Winona Ryder", "Joyce Byers", avatarUrl("Winona Ryder"))
+            )
+            lower.contains("matrix") -> listOf(
+                CastMember("Keanu Reeves", "Neo", avatarUrl("Keanu Reeves")),
+                CastMember("Laurence Fishburne", "Morpheus", avatarUrl("Laurence Fishburne")),
+                CastMember("Carrie-Anne Moss", "Trinity", avatarUrl("Carrie-Anne Moss"))
+            )
+            lower.contains("inception") -> listOf(
+                CastMember("Leonardo DiCaprio", "Dom Cobb", avatarUrl("Leonardo DiCaprio")),
+                CastMember("Joseph Gordon-Levitt", "Arthur", avatarUrl("Joseph Gordon-Levitt")),
+                CastMember("Elliot Page", "Ariadne", avatarUrl("Elliot Page"))
+            )
+            lower.contains("friends") -> listOf(
+                CastMember("Jennifer Aniston", "Rachel Green", avatarUrl("Jennifer Aniston")),
+                CastMember("Courteney Cox", "Monica Geller", avatarUrl("Courteney Cox")),
+                CastMember("Matthew Perry", "Chandler Bing", avatarUrl("Matthew Perry")),
+                CastMember("Matt LeBlanc", "Joey Tribbiani", avatarUrl("Matt LeBlanc"))
+            )
+            lower.contains("office") -> listOf(
+                CastMember("Steve Carell", "Michael Scott", avatarUrl("Steve Carell")),
+                CastMember("John Krasinski", "Jim Halpert", avatarUrl("John Krasinski")),
+                CastMember("Jenna Fischer", "Pam Beesly", avatarUrl("Jenna Fischer")),
+                CastMember("Rainn Wilson", "Dwight Schrute", avatarUrl("Rainn Wilson"))
+            )
+            else -> listOf(
+                CastMember("$title Başrol Oyuncusu", "Ana Karakter", avatarUrl(title)),
+                CastMember("Oyuncu 2", "Kilit Karakter", avatarUrl("$title 2"))
+            )
+        }
+    }
+
+    private fun avatarUrl(name: String): String {
+        val encoded = try { URLEncoder.encode(name, "UTF-8") } catch (e: Exception) { "Actor" }
+        return "https://ui-avatars.com/api/?name=$encoded&background=211B34&color=A855F7&size=200&bold=true"
     }
 }

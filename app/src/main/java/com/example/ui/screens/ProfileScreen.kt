@@ -40,6 +40,8 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     var dialogMode by remember { mutableStateOf(0) } // 0: Export, 1: Import
 
     val profileName by viewModel.profileName.collectAsState()
+    val userEmail by viewModel.userEmail.collectAsState()
+    val isAdmin by viewModel.isAdmin.collectAsState()
     var showEditNameDialog by remember { mutableStateOf(false) }
     var tempNameText by remember { mutableStateOf("") }
 
@@ -169,6 +171,44 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         )
                     }
                 }
+
+                Text(
+                    text = userEmail,
+                    color = VioletLight,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (isAdmin) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = VioletPrimary.copy(alpha = 0.2f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, VioletPrimary)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = VioletLight,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Sistem Yöneticisi (Admin)",
+                                color = VioletLight,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 val userBadge = when {
                     collection.isEmpty() -> "Yeni Sinefil"

@@ -1,11 +1,18 @@
 package com.example.data
 
+import java.net.URLEncoder
+
 object CatalogData {
+    private fun avatar(name: String): String {
+        val enc = try { URLEncoder.encode(name, "UTF-8") } catch (e: Exception) { "Actor" }
+        return "https://ui-avatars.com/api/?name=$enc&background=211B34&color=A855F7&size=200&bold=true"
+    }
+
     val sampleCast = listOf(
-        CastMember("Feyyaz Yiğit", "Yılmaz", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-        CastMember("Kıvanç Tatlıtuğ", "Kadri", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop"),
-        CastMember("Gökhan Yıkılkan", "İlkkan", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop"),
-        CastMember("Haluk Bilginer", "Agâh Beyoğlu", "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop")
+        CastMember("Feyyaz Yiğit", "Yılmaz", avatar("Feyyaz Yiğit")),
+        CastMember("Kıvanç Kılınç", "İlkkan", avatar("Kıvanç Kılınç")),
+        CastMember("Ahmet Mümtaz Taylan", "Zafer", avatar("Ahmet Mümtaz Taylan")),
+        CastMember("Haluk Bilginer", "Agâh Beyoğlu", avatar("Haluk Bilginer"))
     )
 
     val initialCatalog: List<MediaItem> = listOf(
@@ -23,9 +30,10 @@ object CatalogData {
             genres = listOf("Bilim Kurgu", "Macera", "Dram"),
             trailerUrl = "https://www.youtube.com/watch?v=zSWdZVtXT7E",
             cast = listOf(
-                CastMember("Matthew McConaughey", "Cooper", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop"),
-                CastMember("Anne Hathaway", "Brand", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop"),
-                CastMember("Jessica Chastain", "Murph", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop")
+                CastMember("Matthew McConaughey", "Cooper", avatar("Matthew McConaughey")),
+                CastMember("Anne Hathaway", "Brand", avatar("Anne Hathaway")),
+                CastMember("Jessica Chastain", "Murph", avatar("Jessica Chastain")),
+                CastMember("Michael Caine", "Prof. Brand", avatar("Michael Caine"))
             ),
             watchStatus = null,
             userRating = null,
@@ -47,8 +55,10 @@ object CatalogData {
             genres = listOf("Suç", "Dram", "Gerilim"),
             trailerUrl = "https://www.youtube.com/watch?v=HhesaQXLuRY",
             cast = listOf(
-                CastMember("Bryan Cranston", "Walter White", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-                CastMember("Aaron Paul", "Jesse Pinkman", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
+                CastMember("Bryan Cranston", "Walter White", avatar("Bryan Cranston")),
+                CastMember("Aaron Paul", "Jesse Pinkman", avatar("Aaron Paul")),
+                CastMember("Anna Gunn", "Skyler White", avatar("Anna Gunn")),
+                CastMember("Bob Odenkirk", "Saul Goodman", avatar("Bob Odenkirk"))
             ),
             watchStatus = null,
             userRating = null,
@@ -70,8 +80,9 @@ object CatalogData {
             genres = listOf("Psikolojik", "Bilim Kurgu", "Gerilim"),
             trailerUrl = "https://www.youtube.com/watch?v=xEQP4VVuyrY",
             cast = listOf(
-                CastMember("Adam Scott", "Mark Scout", "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop"),
-                CastMember("Patricia Arquette", "Harmony Cobel", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop")
+                CastMember("Adam Scott", "Mark Scout", avatar("Adam Scott")),
+                CastMember("Patricia Arquette", "Harmony Cobel", avatar("Patricia Arquette")),
+                CastMember("Britt Lower", "Helly R.", avatar("Britt Lower"))
             ),
             watchStatus = null,
             userRating = null,
@@ -93,8 +104,9 @@ object CatalogData {
             genres = listOf("Bilim Kurgu", "Aksiyon", "Macera"),
             trailerUrl = "https://www.youtube.com/watch?v=Way9Dexny3w",
             cast = listOf(
-                CastMember("Timothée Chalamet", "Paul Atreides", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop"),
-                CastMember("Zendaya", "Chani", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop")
+                CastMember("Timothée Chalamet", "Paul Atreides", avatar("Timothée Chalamet")),
+                CastMember("Zendaya", "Chani", avatar("Zendaya")),
+                CastMember("Rebecca Ferguson", "Lady Jessica", avatar("Rebecca Ferguson"))
             ),
             watchStatus = null,
             userRating = null,
@@ -116,8 +128,9 @@ object CatalogData {
             genres = listOf("Tarih", "Dram", "Biyografi"),
             trailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
             cast = listOf(
-                CastMember("Cillian Murphy", "J. Robert Oppenheimer", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-                CastMember("Robert Downey Jr.", "Lewis Strauss", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
+                CastMember("Cillian Murphy", "J. Robert Oppenheimer", avatar("Cillian Murphy")),
+                CastMember("Robert Downey Jr.", "Lewis Strauss", avatar("Robert Downey Jr.")),
+                CastMember("Emily Blunt", "Katherine Oppenheimer", avatar("Emily Blunt"))
             ),
             watchStatus = null,
             userRating = null,
@@ -139,7 +152,8 @@ object CatalogData {
             genres = listOf("Bilim Kurgu", "Gizem", "Gerilim"),
             trailerUrl = "https://www.youtube.com/watch?v=rrwyJJgBFyE",
             cast = listOf(
-                CastMember("Louis Hofmann", "Jonas Kahnwald", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop")
+                CastMember("Louis Hofmann", "Jonas Kahnwald", avatar("Louis Hofmann")),
+                CastMember("Oliver Masucci", "Ulrich Nielsen", avatar("Oliver Masucci"))
             ),
             watchStatus = null,
             userRating = null,
@@ -161,8 +175,9 @@ object CatalogData {
             genres = listOf("Suç", "Aksiyon", "Gerilim"),
             trailerUrl = "https://www.youtube.com/watch?v=AL9zLctDJaU",
             cast = listOf(
-                CastMember("Wentworth Miller", "Michael Scofield", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-                CastMember("Dominic Purcell", "Lincoln Burrows", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
+                CastMember("Wentworth Miller", "Michael Scofield", avatar("Wentworth Miller")),
+                CastMember("Dominic Purcell", "Lincoln Burrows", avatar("Dominic Purcell")),
+                CastMember("Robert Knepper", "T-Bag", avatar("Robert Knepper"))
             ),
             watchStatus = null,
             userRating = null,
@@ -184,8 +199,9 @@ object CatalogData {
             genres = listOf("Komedi", "Absürt", "Dram"),
             trailerUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             cast = listOf(
-                CastMember("Feyyaz Yiğit", "Yılmaz", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-                CastMember("Kıvanç Kılınç", "İlkkan", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop")
+                CastMember("Feyyaz Yiğit", "Yılmaz", avatar("Feyyaz Yiğit")),
+                CastMember("Kıvanç Kılınç", "İlkkan", avatar("Kıvanç Kılınç")),
+                CastMember("Ahmet Mümtaz Taylan", "Zafer", avatar("Ahmet Mümtaz Taylan"))
             ),
             watchStatus = null,
             userRating = null,
@@ -207,8 +223,9 @@ object CatalogData {
             genres = listOf("Suç", "Gerilim", "Gizem"),
             trailerUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             cast = listOf(
-                CastMember("Haluk Bilginer", "Agâh Beyoğlu", "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop"),
-                CastMember("Cansu Dere", "Nevra Elmas", "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop")
+                CastMember("Haluk Bilginer", "Agâh Beyoğlu", avatar("Haluk Bilginer")),
+                CastMember("Cansu Dere", "Nevra Elmas", avatar("Cansu Dere")),
+                CastMember("Metin Akdülger", "Ateş Arbay", avatar("Metin Akdülger"))
             ),
             watchStatus = null,
             userRating = null,
@@ -230,8 +247,9 @@ object CatalogData {
             genres = listOf("Dram", "Tarih", "Müzik"),
             trailerUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             cast = listOf(
-                CastMember("Gökçe Bahadır", "Matilda", "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop"),
-                CastMember("Barış Arduç", "İsmet", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop")
+                CastMember("Gökçe Bahadır", "Matilda Baeva", avatar("Gökçe Bahadır")),
+                CastMember("Barış Arduç", "İsmet Denizer", avatar("Barış Arduç")),
+                CastMember("Salih Bademci", "Selim Songür", avatar("Salih Bademci"))
             ),
             watchStatus = null,
             userRating = null,
