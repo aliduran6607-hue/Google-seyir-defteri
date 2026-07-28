@@ -1,0 +1,6 @@
+{
+  "name": "Seyir Defteri",
+  "description": "Premium dark-mode TV show & movie tracker for Turkish cinephiles",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
