@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -39,12 +40,14 @@ fun ContentDetailScreen(
     viewModel: SeyirDefteriViewModel,
     onBack: () -> Unit
 ) {
+    BackHandler(onBack = onBack)
+
     val context = LocalContext.current
     val catalog by viewModel.catalogState.collectAsState()
 
-    var userRatingState by remember(item) { mutableStateOf(item.userRating ?: 8) }
-    var userNotesState by remember(item) { mutableStateOf(item.userNotes) }
-    var watchedEpState by remember(item) { mutableStateOf(item.watchedEpisodes) }
+    var userRatingState by remember(item.id, item.userRating) { mutableStateOf(item.userRating ?: 8) }
+    var userNotesState by remember(item.id, item.userNotes) { mutableStateOf(item.userNotes) }
+    var watchedEpState by remember(item.id, item.watchedEpisodes) { mutableStateOf(item.watchedEpisodes) }
 
     val similarItems = remember(item, catalog) {
         catalog.filter { it.id != item.id && it.genres.any { g -> item.genres.contains(g) } }
@@ -157,10 +160,10 @@ fun ContentDetailScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Action CTAs (Add to collection & Find Similar)
+            // Action CTAs (Add to collection & Find Similar & Share)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
                     onClick = {
@@ -173,7 +176,7 @@ fun ContentDetailScreen(
                         viewModel.updateWatchStatus(item, nextStatus)
                     },
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.2f)
                         .height(46.dp),
                     shape = RoundedCornerShape(23.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -185,15 +188,15 @@ fun ContentDetailScreen(
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = when (item.watchStatus) {
                             "WATCHED" -> "İzlendi"
                             "WATCHING" -> "İzleniyor"
                             "TO_WATCH" -> "İzlenecek"
-                            else -> "Kütüphaneye Ekle"
+                            else -> "Ekle"
                         },
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -204,14 +207,32 @@ fun ContentDetailScreen(
                         viewModel.runAiFind(item.title + " benzeri dizi filmler")
                     },
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1.2f)
                         .height(46.dp),
                     shape = RoundedCornerShape(23.dp),
                     border = androidx.compose.foundation.BorderStroke(1.dp, VioletLight)
                 ) {
-                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = VioletLight, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Benzerlerini Bul", color = VioletLight, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = VioletLight, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Benzerleri", color = VioletLight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+
+                IconButton(
+                    onClick = {
+                        val shareText = "🎬 ${item.title} (${item.year})\nPuan: ${item.userRating ?: item.rating}/10\n\n${item.overview}\n\n#SeyirDefteri"
+                        val shareIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Paylaş"))
+                    },
+                    modifier = Modifier
+                        .size(46.dp)
+                        .background(DarkSurfaceVariant, CircleShape)
+                        .border(1.dp, DarkBorder, CircleShape)
+                ) {
+                    Icon(imageVector = Icons.Default.Share, contentDescription = "Paylaş", tint = TextPrimary, modifier = Modifier.size(20.dp))
                 }
             }
 

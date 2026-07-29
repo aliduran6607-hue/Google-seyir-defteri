@@ -85,20 +85,52 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     val toastMessage: SharedFlow<String> = _toastMessage.asSharedFlow()
 
     // Notifications toggle state
-    val newEpisodeNotify = MutableStateFlow(true)
-    val sequelMovieNotify = MutableStateFlow(true)
-    val weeklyDigestNotify = MutableStateFlow(false)
+    private val _newEpisodeNotify = MutableStateFlow(true)
+    val newEpisodeNotify: StateFlow<Boolean> = _newEpisodeNotify.asStateFlow()
+
+    private val _sequelMovieNotify = MutableStateFlow(true)
+    val sequelMovieNotify: StateFlow<Boolean> = _sequelMovieNotify.asStateFlow()
+
+    private val _weeklyDigestNotify = MutableStateFlow(false)
+    val weeklyDigestNotify: StateFlow<Boolean> = _weeklyDigestNotify.asStateFlow()
 
     // Language state ("tr" or "en")
-    val selectedLanguage = MutableStateFlow("tr")
+    private val _selectedLanguage = MutableStateFlow("tr")
+    val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
     // Theme state (true: Dark, false: Light)
-    val isDarkMode = MutableStateFlow(true)
+    private val _isDarkMode = MutableStateFlow(true)
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
     // User Profile & Admin States
-    val userEmail = MutableStateFlow("aliduran6607@gmail.com")
-    val profileName = MutableStateFlow("Ali Duran")
-    val isAdmin = MutableStateFlow(true)
+    private val _userEmail = MutableStateFlow("aliduran6607@gmail.com")
+    val userEmail: StateFlow<String> = _userEmail.asStateFlow()
+
+    private val _profileName = MutableStateFlow("Ali Duran")
+    val profileName: StateFlow<String> = _profileName.asStateFlow()
+
+    private val _isAdmin = MutableStateFlow(true)
+    val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
+
+    fun setNewEpisodeNotify(enabled: Boolean) {
+        _newEpisodeNotify.value = enabled
+    }
+
+    fun setSequelMovieNotify(enabled: Boolean) {
+        _sequelMovieNotify.value = enabled
+    }
+
+    fun setWeeklyDigestNotify(enabled: Boolean) {
+        _weeklyDigestNotify.value = enabled
+    }
+
+    fun setSelectedLanguage(lang: String) {
+        _selectedLanguage.value = lang
+    }
+
+    fun setDarkMode(enabled: Boolean) {
+        _isDarkMode.value = enabled
+    }
 
     init {
         // Clean up any initial pre-seeded demo items and auto-import user's personal backup data
@@ -120,7 +152,7 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
 
     fun updateProfileName(name: String) {
         if (name.isNotBlank()) {
-            profileName.value = name.trim()
+            _profileName.value = name.trim()
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -36,6 +37,15 @@ fun MainScreen(viewModel: SeyirDefteriViewModel) {
     val context = LocalContext.current
     val currentTab by viewModel.currentTab.collectAsState()
     val selectedItem by viewModel.selectedMediaItem.collectAsState()
+
+    // BackHandler for main navigation hierarchy
+    BackHandler(enabled = selectedItem != null || currentTab != 0) {
+        if (selectedItem != null) {
+            viewModel.closeDetail()
+        } else if (currentTab != 0) {
+            viewModel.selectTab(0)
+        }
+    }
 
     // Observe ViewModel Toast Messages with toast replacement
     LaunchedEffect(Unit) {
@@ -77,7 +87,7 @@ fun MainScreen(viewModel: SeyirDefteriViewModel) {
             }
         }
 
-        // Bottom Navigation Bar
+        // Bottom Navigation Bar (5 Items Max for Material 3 Ergonomics)
         if (selectedItem == null) {
             Surface(
                 modifier = Modifier
@@ -119,12 +129,6 @@ fun MainScreen(viewModel: SeyirDefteriViewModel) {
                         label = "İstatistik",
                         isSelected = currentTab == 3,
                         onClick = { viewModel.selectTab(3) }
-                    )
-                    NavItem(
-                        icon = Icons.Default.Share,
-                        label = "Paylaş",
-                        isSelected = currentTab == 5,
-                        onClick = { viewModel.selectTab(5) }
                     )
                     NavItem(
                         icon = Icons.Default.Person,

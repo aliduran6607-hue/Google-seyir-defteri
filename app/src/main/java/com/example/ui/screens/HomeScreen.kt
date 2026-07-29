@@ -47,15 +47,32 @@ fun HomeScreen(
     onOpenSearch: () -> Unit
 ) {
     val catalog by viewModel.catalogState.collectAsState()
-    val heroItem = catalog.firstOrNull() ?: return
     val selectedGenre by viewModel.selectedGenre.collectAsState()
+
+    if (catalog.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = VioletPrimary)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Katalog Yükleniyor...", color = TextSecondary, fontSize = 14.sp)
+            }
+        }
+        return
+    }
+
+    val heroItem = catalog.first()
 
     val genres = listOf("Tümü", "Aksiyon", "Drama", "Komedi", "Bilim Kurgu", "Suç", "Gerilim", "Romantik", "Tarih")
 
-    val trendingItems = catalog.filter { it.rating >= 8.5f }
-    val topRatedItems = catalog.sortedByDescending { it.rating }
-    val newThisWeek = catalog.filter { it.year >= 2023 }
-    val becauseYouWatched = catalog.filter { it.genres.any { g -> g == "Bilim Kurgu" || g == "Suç" || g == "Gerilim" } }
+    val trendingItems = remember(catalog) { catalog.filter { it.rating >= 8.5f } }
+    val topRatedItems = remember(catalog) { catalog.sortedByDescending { it.rating } }
+    val newThisWeek = remember(catalog) { catalog.filter { it.year >= 2023 } }
+    val becauseYouWatched = remember(catalog) { catalog.filter { it.genres.any { g -> g == "Bilim Kurgu" || g == "Suç" || g == "Gerilim" } } }
 
     Column(
         modifier = Modifier

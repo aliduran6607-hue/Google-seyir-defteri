@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import java.util.Calendar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -38,6 +39,33 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
     val completedCount = collection.count { it.watchStatus == "WATCHED" }
     val watchingCount = collection.count { it.watchStatus == "WATCHING" }
     val toWatchCount = collection.count { it.watchStatus == "TO_WATCH" }
+
+    val addedThisMonthCount = remember(collection) {
+        val currentCal = Calendar.getInstance()
+        val currentMonth = currentCal.get(Calendar.MONTH)
+        val currentYear = currentCal.get(Calendar.YEAR)
+        collection.count { item ->
+            val cal = Calendar.getInstance().apply { timeInMillis = item.addedDateMillis }
+            cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+        }
+    }
+
+    val heatmapData = remember(collection) {
+        val now = System.currentTimeMillis()
+        val dayMillis = 86400000L
+        val counts = IntArray(80) { 0 }
+        collection.forEach { item ->
+            val daysAgoAdded = ((now - item.addedDateMillis) / dayMillis).toInt()
+            if (daysAgoAdded in 0..79) {
+                counts[79 - daysAgoAdded] += 1
+            }
+            val daysAgoUpdated = ((now - item.lastUpdatedMillis) / dayMillis).toInt()
+            if (daysAgoUpdated in 0..79 && daysAgoUpdated != daysAgoAdded) {
+                counts[79 - daysAgoUpdated] += 1
+            }
+        }
+        counts
+    }
 
     val ratedItems = collection.mapNotNull { it.userRating }
     val avgRating = if (ratedItems.isNotEmpty()) ratedItems.average() else 8.7
@@ -131,7 +159,7 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
             )
             SummaryStatCard(
                 title = "Bu Ay Eklenen",
-                value = "${(totalContent * 0.4).toInt().coerceAtLeast(1)}",
+                value = "$addedThisMonthCount",
                 subtext = "Yeni kayıt",
                 icon = Icons.Default.TrendingUp,
                 accentColor = StatusWatching,
@@ -298,17 +326,17 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
                 Text(text = "Son 12 Ay Aktivite Yoğunluğu", color = TextSecondary, fontSize = 11.sp)
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Heatmap Grid (7 rows x 16 cols)
+                // Heatmap Grid (5 rows x 16 cols)
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     repeat(5) { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             repeat(16) { col ->
-                                val intensity = ((row * 3 + col * 7) % 5)
-                                val cellColor = when (intensity) {
-                                    4 -> VioletPrimary
-                                    3 -> VioletDark
-                                    2 -> VioletPrimary.copy(alpha = 0.5f)
-                                    1 -> DarkSurfaceVariant
+                                val index = row * 16 + col
+                                val count = heatmapData.getOrElse(index) { 0 }
+                                val cellColor = when {
+                                    count >= 3 -> VioletPrimary
+                                    count == 2 -> VioletDark
+                                    count == 1 -> VioletPrimary.copy(alpha = 0.5f)
                                     else -> Color(0xFF1E1830)
                                 }
                                 Box(

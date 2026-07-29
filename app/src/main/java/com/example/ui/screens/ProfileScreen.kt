@@ -320,21 +320,21 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     title = "Yeni Bölüm Bildirimleri",
                     subtitle = "Takip ettiğiniz dizilerin yeni bölümleri yayınlandığında haber ver",
                     isChecked = newEpNotify,
-                    onCheckedChange = { viewModel.newEpisodeNotify.value = it }
+                    onCheckedChange = { viewModel.setNewEpisodeNotify(it) }
                 )
                 Divider(color = DarkBorder)
                 SettingToggleRow(
                     title = "Devam Filmleri & Fragmanlar",
                     subtitle = "İzlediğiniz filmlerin devam halkaları duyurulduğunda bildirim gönder",
                     isChecked = sequelNotify,
-                    onCheckedChange = { viewModel.sequelMovieNotify.value = it }
+                    onCheckedChange = { viewModel.setSequelMovieNotify(it) }
                 )
                 Divider(color = DarkBorder)
                 SettingToggleRow(
                     title = "Haftalık Sinema Özeti",
                     subtitle = "Her Pazar haftalık izleme istatistiklerinizi özetle",
                     isChecked = weeklyNotify,
-                    onCheckedChange = { viewModel.weeklyDigestNotify.value = it }
+                    onCheckedChange = { viewModel.setWeeklyDigestNotify(it) }
                 )
             }
         }
@@ -416,7 +416,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { viewModel.selectedLanguage.value = "tr" },
+                            .clickable { viewModel.setSelectedLanguage("tr") },
                         shape = RoundedCornerShape(12.dp),
                         color = if (selectedLang == "tr") VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
                         border = androidx.compose.foundation.BorderStroke(
@@ -444,7 +444,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { viewModel.selectedLanguage.value = "en" },
+                            .clickable { viewModel.setSelectedLanguage("en") },
                         shape = RoundedCornerShape(12.dp),
                         color = if (selectedLang == "en") VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
                         border = androidx.compose.foundation.BorderStroke(
@@ -491,7 +491,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { viewModel.isDarkMode.value = true },
+                            .clickable { viewModel.setDarkMode(true) },
                         shape = RoundedCornerShape(12.dp),
                         color = if (isDarkMode) VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
                         border = androidx.compose.foundation.BorderStroke(
@@ -519,7 +519,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .clickable { viewModel.isDarkMode.value = false },
+                            .clickable { viewModel.setDarkMode(false) },
                         shape = RoundedCornerShape(12.dp),
                         color = if (!isDarkMode) VioletPrimary.copy(alpha = 0.25f) else DarkSurfaceVariant,
                         border = androidx.compose.foundation.BorderStroke(

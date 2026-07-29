@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -205,8 +206,9 @@ fun SearchAiScreen(viewModel: SeyirDefteriViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        when (activeTab) {
-            0 -> {
+        AnimatedContent(targetState = activeTab, label = "search_tab_anim") { tab ->
+            when (tab) {
+                0 -> {
                 // TVMaze & TMDB Live Search Bar
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -727,6 +729,7 @@ fun SearchAiScreen(viewModel: SeyirDefteriViewModel) {
             }
         }
     }
+}
 }
 
 @Composable
