@@ -23,6 +23,12 @@ class MediaRepository(private val mediaDao: MediaDao) {
         mediaDao.insertOrUpdate(updated)
     }
 
+    suspend fun saveItemsToCollection(items: List<MediaItem>) {
+        val now = System.currentTimeMillis()
+        val updated = items.map { it.copy(lastUpdatedMillis = now) }
+        mediaDao.insertAll(updated)
+    }
+
     suspend fun removeFromCollection(item: MediaItem) {
         mediaDao.deleteById(item.id)
     }

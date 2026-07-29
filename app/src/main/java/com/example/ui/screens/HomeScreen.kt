@@ -119,13 +119,13 @@ fun HomeScreen(
                             border = androidx.compose.foundation.BorderStroke(1.dp, VioletPrimary.copy(alpha = 0.5f)),
                             modifier = Modifier.size(40.dp)
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.app_icon_seyirdefteri),
+                            AsyncImage(
+                                model = R.drawable.app_icon_seyirdefteri,
                                 contentDescription = "Seyir Defteri Logo",
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .clip(RoundedCornerShape(10.dp)),
-                                contentScale = ContentScale.Fit
+                                contentScale = ContentScale.Crop
                             )
                         }
 

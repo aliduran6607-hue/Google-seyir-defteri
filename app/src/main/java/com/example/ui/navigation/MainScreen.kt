@@ -37,10 +37,12 @@ fun MainScreen(viewModel: SeyirDefteriViewModel) {
     val currentTab by viewModel.currentTab.collectAsState()
     val selectedItem by viewModel.selectedMediaItem.collectAsState()
 
-    // Observe ViewModel Toast Messages
+    // Observe ViewModel Toast Messages with toast replacement
     LaunchedEffect(Unit) {
+        var currentToast: Toast? = null
         viewModel.toastMessage.collectLatest { msg ->
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            currentToast?.cancel()
+            currentToast = Toast.makeText(context, msg, Toast.LENGTH_SHORT).apply { show() }
         }
     }
 

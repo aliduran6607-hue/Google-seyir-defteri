@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import org.json.JSONObject
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -101,7 +102,7 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
 
     init {
         // Clean up any initial pre-seeded demo items and auto-import user's personal backup data
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val demoIds = listOf(
                 "interstellar-movie", "breaking-bad-tv", "severance-tv", "dune2-movie",
                 "oppenheimer-movie", "dark-tv", "prison-break-tv", "gibi-tv", "sahsiyet-tv", "kulup-tv"
@@ -109,8 +110,11 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
             demoIds.forEach { id ->
                 db.mediaDao().deleteById(id)
             }
-            // Auto import user backup library
-            importBackupJson(UserBackupData.initialUserBackupJson)
+            // Auto import user backup library in batch on IO thread
+            val currentItemsCount = db.mediaDao().getAllUserItems().firstOrNull()?.size ?: 0
+            if (currentItemsCount == 0) {
+                importBackupJsonInternal(UserBackupData.initialUserBackupJson, showToast = false)
+            }
         }
     }
 
@@ -275,19 +279,25 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
         return jsonStr
     }
 
-    fun importBackupJson(jsonStr: String) {
-        viewModelScope.launch {
-            try {
-                val list = parseAnyJsonBackup(jsonStr)
-                if (list.isNotEmpty()) {
-                    list.forEach { item ->
-                        repository.saveItemToCollection(item)
-                    }
+    fun importBackupJson(jsonStr: String, showToast: Boolean = true) {
+        viewModelScope.launch(Dispatchers.IO) {
+            importBackupJsonInternal(jsonStr, showToast)
+        }
+    }
+
+    private suspend fun importBackupJsonInternal(jsonStr: String, showToast: Boolean = true) {
+        try {
+            val list = parseAnyJsonBackup(jsonStr)
+            if (list.isNotEmpty()) {
+                repository.saveItemsToCollection(list)
+                if (showToast) {
                     _toastMessage.emit("${list.size} içerik başarıyla kütüphaneye aktarıldı.")
-                } else {
-                    _toastMessage.emit("Geçersiz veya boş JSON dosyası!")
                 }
-            } catch (e: Exception) {
+            } else if (showToast) {
+                _toastMessage.emit("Geçersiz veya boş JSON dosyası!")
+            }
+        } catch (e: Exception) {
+            if (showToast) {
                 _toastMessage.emit("Geçersiz JSON dosyası: ${e.localizedMessage}")
             }
         }

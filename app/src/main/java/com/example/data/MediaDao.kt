@@ -14,6 +14,9 @@ interface MediaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(item: MediaItem)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<MediaItem>)
+
     @Delete
     suspend fun delete(item: MediaItem)
 

@@ -67,7 +67,6 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     }
                     selectedFileName = fileName
                     viewModel.importBackupJson(jsonString)
-                    Toast.makeText(context, "✅ '$fileName' yedeği kütüphaneye başarıyla aktarıldı!", Toast.LENGTH_LONG).show()
                 } else {
                     Toast.makeText(context, "⚠️ Seçilen dosya boş veya okunamadı!", Toast.LENGTH_SHORT).show()
                 }
@@ -750,7 +749,6 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         } else {
                             if (jsonTextState.isNotBlank()) {
                                 viewModel.importBackupJson(jsonTextState)
-                                Toast.makeText(context, "Yedek içe aktarıldı!", Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(context, "Lütfen bir dosya seçin veya JSON metni yapıştırın", Toast.LENGTH_SHORT).show()
                                 return@Button

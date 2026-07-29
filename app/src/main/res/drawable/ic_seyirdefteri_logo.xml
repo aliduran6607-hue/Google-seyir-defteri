@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    
+    <!-- Outer Glow Circle -->
+    <path
+        android:fillColor="#7C3AED"
+        android:pathData="M48,8 C69.98,8 88,26.02 88,48 C88,69.98 69.98,88 48,88 C26.02,88 8,69.98 8,48 C8,26.02 26.02,8 48,8 Z" />
+
+    <!-- Inner Dark Core -->
+    <path
+        android:fillColor="#0D0B18"
+        android:pathData="M48,14 C66.78,14 82,29.22 82,48 C82,66.78 66.78,82 48,82 C29.22,82 14,66.78 14,48 C14,29.22 29.22,14 48,14 Z" />
+
+    <!-- Film Reel & Compass Star Paths -->
+    <!-- Film Reel Outer Ring Holes -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M48,22 C50.76,22 53,24.24 53,27 C53,29.76 50.76,32 48,32 C45.24,32 43,29.76 43,27 C43,24.24 45.24,22 48,22 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M48,64 C50.76,64 53,66.24 53,69 C53,71.76 50.76,74 48,74 C45.24,74 43,71.76 43,69 C43,66.24 45.24,64 48,64 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M22,48 C22,45.24 24.24,43 27,43 C29.76,43 32,45.24 32,48 C32,50.76 29.76,53 27,53 C24.24,53 22,50.76 22,48 Z" />
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M64,48 C64,45.24 66.24,43 69,43 C71.76,43 74,45.24 74,48 C74,50.76 71.76,53 69,53 C66.24,53 64,50.76 64,48 Z" />
+
+    <!-- Play/Compass Center Symbol -->
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M42,34 L62,48 L42,62 Z" />
+
+    <!-- Play Symbol Highlight Overlay -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M45,40 L55,48 L45,56 Z" />
+</vector>
