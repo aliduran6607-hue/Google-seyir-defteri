@@ -247,11 +247,13 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
 
                 Spacer(modifier = Modifier.height(6.dp))
 
+                val watchedCount = remember(collection) { collection.count { it.watchStatus == "WATCHED" } }
                 val userBadge = when {
-                    collection.isEmpty() -> "Yeni Sinefil"
-                    collection.size in 1..5 -> "Meraklı İzleyici"
-                    collection.size in 6..15 -> "Dizi & Film Sever"
-                    else -> "Usta Sinefil"
+                    watchedCount < 10 -> "Yeni Başlayan"
+                    watchedCount in 10..29 -> "Meraklı İzleyici"
+                    watchedCount in 30..74 -> "Deneyimli Sinefil"
+                    watchedCount in 75..149 -> "Usta Sinefil"
+                    else -> "Efsane Sinefil"
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -269,7 +271,7 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Kütüphane: ${collection.size} İçerik",
+                        text = "İzlenen: $watchedCount • Toplam: ${collection.size}",
                         color = TextSecondary,
                         fontSize = 11.sp
                     )

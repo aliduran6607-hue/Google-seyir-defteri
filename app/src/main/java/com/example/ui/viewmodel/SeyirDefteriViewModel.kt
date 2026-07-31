@@ -354,7 +354,7 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
                         val obj = array.getJSONObject(i)
                         val rawId = obj.opt("id")?.toString() ?: "imp_$i"
                         val isim = obj.optString("isim", obj.optString("title", "İsimsiz İçerik"))
-                        val poster = obj.optString("poster", obj.optString("posterUrl", "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop"))
+                        val poster = obj.optString("poster", obj.optString("posterUrl", "https://image.tmdb.org/t/p/w500/tihf8Trht9zP3scmUQfvGlAY9FU.jpg"))
                         val turStr = obj.optString("tur", obj.optString("type", "Film"))
                         val type = if (turStr.equals("Dizi", ignoreCase = true) || turStr.equals("TV", ignoreCase = true)) "TV" else "MOVIE"
 

@@ -98,10 +98,10 @@ object TvmazeTmdbService {
             val imageObj = showObj.optJSONObject("image")
             val posterUrl = imageObj?.optString("original")
                 ?: imageObj?.optString("medium")
-                ?: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop"
+                ?: "https://image.tmdb.org/t/p/w500/tihf8Trht9zP3scmUQfvGlAY9FU.jpg"
 
             val backdropUrl = imageObj?.optString("original")
-                ?: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=1200&auto=format&fit=crop"
+                ?: "https://image.tmdb.org/t/p/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg"
 
             val genresJson = showObj.optJSONArray("genres")
             val genres = mutableListOf<String>()
@@ -184,10 +184,10 @@ object TvmazeTmdbService {
                 val backdropPath = item.optString("backdrop_path", "")
 
                 val posterUrl = if (posterPath.isNotBlank()) "$TMDB_IMAGE_BASE_W500$posterPath"
-                else "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600&auto=format&fit=crop"
+                else "https://image.tmdb.org/t/p/w500/tihf8Trht9zP3scmUQfvGlAY9FU.jpg"
 
                 val backdropUrl = if (backdropPath.isNotBlank()) "$TMDB_IMAGE_BASE_ORIGINAL$backdropPath"
-                else "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=1200&auto=format&fit=crop"
+                else "https://image.tmdb.org/t/p/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg"
 
                 val mediaItem = MediaItem(
                     id = id,

@@ -131,6 +131,12 @@ fun MainScreen(viewModel: SeyirDefteriViewModel) {
                         onClick = { viewModel.selectTab(3) }
                     )
                     NavItem(
+                        icon = Icons.Default.Share,
+                        label = "Paylaş",
+                        isSelected = currentTab == 5,
+                        onClick = { viewModel.selectTab(5) }
+                    )
+                    NavItem(
                         icon = Icons.Default.Person,
                         label = "Profil",
                         isSelected = currentTab == 4,

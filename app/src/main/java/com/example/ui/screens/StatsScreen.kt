@@ -68,21 +68,71 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
     }
 
     val ratedItems = collection.mapNotNull { it.userRating }
-    val avgRating = if (ratedItems.isNotEmpty()) ratedItems.average() else 8.7
+    val avgRating = if (ratedItems.isNotEmpty()) ratedItems.average() else 0.0
 
     val top5Items = remember(collection) {
         collection.sortedByDescending { it.userRating ?: it.rating.toInt() }.take(5)
     }
 
-    // Genre distribution map
-    val genreCounts = remember(collection) {
+    // Genre distribution map (based on watched items first, or collection if no watched items)
+    val watchedItems = remember(collection) { collection.filter { it.watchStatus == "WATCHED" } }
+    val targetAnalysisList = if (watchedItems.isNotEmpty()) watchedItems else collection
+
+    val genreCounts = remember(targetAnalysisList) {
         val map = mutableMapOf<String, Int>()
-        collection.forEach { item ->
+        targetAnalysisList.forEach { item ->
             item.genres.forEach { genre ->
                 map[genre] = (map[genre] ?: 0) + 1
             }
         }
         map.entries.sortedByDescending { it.value }.take(6)
+    }
+
+    // Dynamic watch profile calculation based strictly on real user items
+    val watchProfile = remember(genreCounts, ratedItems, collection, watchedItems) {
+        if (collection.isEmpty()) {
+            Triple(
+                "Henüz Veri Yok",
+                "Kütüphanenizde henüz film veya dizi bulunmuyor. Eklediğiniz içeriklere göre izleme profiliniz burada otomatik hesaplanacaktır.",
+                ""
+            )
+        } else if (genreCounts.isEmpty()) {
+            Triple(
+                "Tür Bilgisi Eksik",
+                "Eklediğiniz içeriklerin tür bilgisi tanımlanmamış.",
+                ""
+            )
+        } else {
+            val totalTarget = targetAnalysisList.size
+            val topGenres = genreCounts.take(2)
+
+            val mainTitle = when (topGenres.size) {
+                2 -> "${topGenres[0].key} & ${topGenres[1].key} Ağırlıklı"
+                1 -> "${topGenres[0].key} Odaklı"
+                else -> "Genel Sinema & Dizi Sever"
+            }
+
+            val isWatchedBased = watchedItems.isNotEmpty()
+            val scopeText = if (isWatchedBased) "İzlediğiniz $totalTarget içerik" else "Kütüphanenizdeki $totalTarget içerik"
+
+            val topGenreText = if (topGenres.size >= 2) {
+                val pct1 = (topGenres[0].value * 100) / totalTarget
+                val pct2 = (topGenres[1].value * 100) / totalTarget
+                "en çok ${topGenres[0].key} (%$pct1) ve ${topGenres[1].key} (%$pct2) türlerinden oluşuyor."
+            } else {
+                val pct = (topGenres[0].value * 100) / totalTarget
+                "ağırlıklı olarak ${topGenres[0].key} (%$pct) türünden oluşuyor."
+            }
+
+            val ratingText = if (ratedItems.isNotEmpty()) {
+                " Puanladığınız ${ratedItems.size} içeriğin ortalaması ${String.format("%.1f", avgRating)}/10."
+            } else {
+                " Henüz kişisel puan verdiğiniz içerik bulunmuyor."
+            }
+
+            val desc = "$scopeText $topGenreText$ratingText"
+            Triple(mainTitle, desc, topGenres.firstOrNull()?.key ?: "")
+        }
     }
 
     // Rating histogram map (1 to 10)
@@ -135,8 +185,8 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
             )
             SummaryStatCard(
                 title = "Ort. Puanın",
-                value = String.format("%.1f", avgRating),
-                subtext = "/ 10 Puan",
+                value = if (ratedItems.isNotEmpty()) String.format("%.1f", avgRating) else "-",
+                subtext = if (ratedItems.isNotEmpty()) "/ 10 (${ratedItems.size} puanlama)" else "Puanlanmadı",
                 icon = Icons.Default.Star,
                 accentColor = AmberRating,
                 modifier = Modifier.weight(1f)
@@ -169,7 +219,7 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // "Zevk Profili" AI Taste Insight Card
+        // "İzleme Profili" Insight Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -191,16 +241,16 @@ fun StatsScreen(viewModel: SeyirDefteriViewModel) {
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Zevk Profili Analizi", color = VioletLight, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "İzleme Profili Analizi", color = VioletLight, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "Psikolojik Gerilim & Bilim Kurgu Tutkunu",
+                        text = watchProfile.first,
                         color = TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Karmaşık olay örgüleri ve yüksek IMDb puanlı kültür yapımları tercih ediyorsunuz.",
+                        text = watchProfile.second,
                         color = TextSecondary,
                         fontSize = 12.sp,
                         lineHeight = 16.sp

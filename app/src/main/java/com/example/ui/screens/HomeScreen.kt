@@ -67,12 +67,17 @@ fun HomeScreen(
 
     val heroItem = catalog.first()
 
-    val genres = listOf("Tümü", "Aksiyon", "Drama", "Komedi", "Bilim Kurgu", "Suç", "Gerilim", "Romantik", "Tarih")
+    val genres = listOf("Tümü", "Aksiyon", "Dram", "Komedi", "Bilim Kurgu", "Suç", "Gerilim", "Animasyon", "Tarih")
 
-    val trendingItems = remember(catalog) { catalog.filter { it.rating >= 8.5f } }
-    val topRatedItems = remember(catalog) { catalog.sortedByDescending { it.rating } }
-    val newThisWeek = remember(catalog) { catalog.filter { it.year >= 2023 } }
-    val becauseYouWatched = remember(catalog) { catalog.filter { it.genres.any { g -> g == "Bilim Kurgu" || g == "Suç" || g == "Gerilim" } } }
+    val filteredCatalog = remember(catalog, selectedGenre) {
+        if (selectedGenre == "Tümü") catalog
+        else catalog.filter { item -> item.genres.any { g -> g.equals(selectedGenre, ignoreCase = true) || (selectedGenre == "Dram" && g.equals("Drama", ignoreCase = true)) } }
+    }
+
+    val trendingItems = remember(filteredCatalog) { filteredCatalog.filter { it.rating >= 8.5f } }
+    val topRatedItems = remember(filteredCatalog) { filteredCatalog.sortedByDescending { it.rating } }
+    val newThisWeek = remember(filteredCatalog) { filteredCatalog.filter { it.year >= 2025 } }
+    val becauseYouWatched = remember(filteredCatalog) { filteredCatalog.filter { it.genres.any { g -> g == "Bilim Kurgu" || g == "Suç" || g == "Gerilim" } } }
 
     Column(
         modifier = Modifier
