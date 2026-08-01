@@ -26,6 +26,156 @@ object TvmazeTmdbService {
      * Searches both TVMaze (for TV shows, 100% free with no API key)
      * and TMDB (for Movies & TV shows, with TMDB API key if available or public fallback).
      */
+    suspend fun fetchLiveTrending(customKey: String? = null): List<MediaItem> = coroutineScope {
+        val candidateKeys = listOfNotNull(
+            customKey.takeIf { !it.isNullOrBlank() },
+            try { BuildConfig::class.java.getField("TMDB_API_KEY").get(null) as? String } catch (e: Exception) { null },
+            "a07e22bc18f5cb106bfe4cc1f83ad8ed",
+            "2dca580c2a14b55200e784d157207b4d",
+            "4fcd9446412573801f92e22c0ff1a9a8",
+            "fb67a2050b58614d33d7088f669dbb41",
+            "8424b901a1d1377e8499279da152862d"
+        ).distinct()
+
+        val moviesDeferred = async(Dispatchers.IO) { fetchTmdbTrendingCategory("movie", candidateKeys) }
+        val tvDeferred = async(Dispatchers.IO) { fetchTmdbTrendingCategory("tv", candidateKeys) }
+        val tvmazeDeferred = async(Dispatchers.IO) { fetchTvmazePopular() }
+
+        val movies = try { moviesDeferred.await() } catch (e: Exception) { emptyList() }
+        val tvShows = try { tvDeferred.await() } catch (e: Exception) { emptyList() }
+        val tvmazeShows = try { tvmazeDeferred.await() } catch (e: Exception) { emptyList() }
+
+        val combined = (movies + tvShows + tvmazeShows)
+            .distinctBy { it.title.lowercase().trim() }
+
+        return@coroutineScope combined
+    }
+
+    private fun fetchTmdbTrendingCategory(category: String, candidateKeys: List<String>): List<MediaItem> {
+        val results = mutableListOf<MediaItem>()
+        for (apiKey in candidateKeys) {
+            val url = "https://api.themoviedb.org/3/trending/$category/week?api_key=$apiKey&language=tr-TR"
+            val responseStr = executeGet(url) ?: continue
+            val jsonObj = JSONObject(responseStr)
+            val resultsArr = jsonObj.optJSONArray("results") ?: continue
+
+            for (i in 0 until resultsArr.length()) {
+                val item = resultsArr.optJSONObject(i) ?: continue
+                val isTv = category == "tv"
+                val id = "tmdb-trend-${if (isTv) "tv" else "movie"}-${item.optInt("id")}"
+                val title = if (isTv) item.optString("name", "") else item.optString("title", "")
+                val origTitle = if (isTv) item.optString("original_name", title) else item.optString("original_title", title)
+                val finalTitle = origTitle.ifBlank { title }
+                if (finalTitle.isBlank()) continue
+
+                val overview = item.optString("overview", "").ifBlank { "$finalTitle yapımı hakkında detaylı bilgiler TMDB veritabanından çekilmiştir." }
+                val releaseDate = if (isTv) item.optString("first_air_date", "") else item.optString("release_date", "")
+                val year = try {
+                    if (releaseDate.length >= 4) releaseDate.substring(0, 4).toInt() else 2026
+                } catch (e: Exception) { 2026 }
+
+                val rating = item.optDouble("vote_average", 7.8).toFloat()
+                val posterPath = item.optString("poster_path", "")
+                val backdropPath = item.optString("backdrop_path", "")
+
+                val posterUrl = if (posterPath.isNotBlank()) "$TMDB_IMAGE_BASE_W500$posterPath"
+                else "https://image.tmdb.org/t/p/w500/tihf8Trht9zP3scmUQfvGlAY9FU.jpg"
+
+                val backdropUrl = if (backdropPath.isNotBlank()) "$TMDB_IMAGE_BASE_ORIGINAL$backdropPath"
+                else "https://image.tmdb.org/t/p/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg"
+
+                results.add(
+                    MediaItem(
+                        id = id,
+                        title = finalTitle,
+                        originalTitle = finalTitle,
+                        type = if (isTv) "TV" else "MOVIE",
+                        year = year,
+                        runtime = if (isTv) "GÜNCEL DİZİ (TMDB)" else "GÜNCEL FİLM (TMDB)",
+                        rating = String.format("%.1f", rating).replace(",", ".").toFloatOrNull() ?: rating,
+                        posterUrl = posterUrl,
+                        backdropUrl = backdropUrl,
+                        overview = overview,
+                        genres = mapTmdbGenreIds(item.optJSONArray("genre_ids")),
+                        trailerUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode("$finalTitle fragman", "UTF-8")}",
+                        cast = getCastForMedia(finalTitle, if (isTv) "TV" else "MOVIE")
+                    )
+                )
+            }
+
+            if (results.isNotEmpty()) break
+        }
+        return results
+    }
+
+    private fun fetchTvmazePopular(): List<MediaItem> {
+        val url = "https://api.tvmaze.com/shows?page=0"
+        val responseStr = executeGet(url) ?: return emptyList()
+        val jsonArray = JSONArray(responseStr)
+
+        val seriesList = mutableListOf<MediaItem>()
+        for (i in 0 until minOf(jsonArray.length(), 25)) {
+            val showObj = jsonArray.optJSONObject(i) ?: continue
+
+            val id = "tvmaze-popular-${showObj.optInt("id")}"
+            val name = showObj.optString("name", "")
+            if (name.isBlank()) continue
+
+            val rawSummary = showObj.optString("summary", "")
+            val cleanSummary = rawSummary.replace(Regex("<[^>]*>"), "").trim()
+                .ifEmpty { "$name dizisi TVMaze veritabanında yer alan popüler bir yapımdır." }
+
+            val premiered = showObj.optString("premiered", "")
+            val year = try {
+                if (premiered.length >= 4) premiered.substring(0, 4).toInt() else 2024
+            } catch (e: Exception) { 2024 }
+
+            val ratingObj = showObj.optJSONObject("rating")
+            val avgRating = ratingObj?.optDouble("average", 8.2) ?: 8.2
+
+            val imageObj = showObj.optJSONObject("image")
+            val posterUrl = imageObj?.optString("original")
+                ?: imageObj?.optString("medium")
+                ?: "https://image.tmdb.org/t/p/w500/tihf8Trht9zP3scmUQfvGlAY9FU.jpg"
+
+            val backdropUrl = imageObj?.optString("original")
+                ?: "https://image.tmdb.org/t/p/w1280/eZ239CUp1d6OryZEBPnO2n87gMG.jpg"
+
+            val genresJson = showObj.optJSONArray("genres")
+            val genres = mutableListOf<String>()
+            if (genresJson != null) {
+                for (j in 0 until genresJson.length()) {
+                    genres.add(genresJson.optString(j))
+                }
+            }
+            if (genres.isEmpty()) genres.add("Dram")
+
+            seriesList.add(
+                MediaItem(
+                    id = id,
+                    title = name,
+                    originalTitle = name,
+                    type = "TV",
+                    year = year,
+                    runtime = "GÜNCEL DİZİ (TVMaze)",
+                    rating = avgRating.toFloat(),
+                    posterUrl = posterUrl,
+                    backdropUrl = backdropUrl,
+                    overview = cleanSummary,
+                    genres = genres,
+                    trailerUrl = "https://www.youtube.com/results?search_query=${URLEncoder.encode("$name trailer", "UTF-8")}",
+                    cast = getCastForMedia(name, "TV")
+                )
+            )
+        }
+
+        return seriesList
+    }
+
+    /**
+     * Searches both TVMaze (for TV shows, 100% free with no API key)
+     * and TMDB (for Movies & TV shows, with TMDB API key if available or public fallback).
+     */
     suspend fun searchLiveMedia(query: String, customTmdbKey: String? = null): Pair<List<MediaItem>, List<MediaItem>> = coroutineScope {
         val trimmed = query.trim()
         if (trimmed.length < 2) return@coroutineScope Pair(emptyList(), emptyList())

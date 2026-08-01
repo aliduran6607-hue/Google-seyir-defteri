@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MovieFilter
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -74,7 +75,12 @@ fun HomeScreen(
         else catalog.filter { item -> item.genres.any { g -> g.equals(selectedGenre, ignoreCase = true) || (selectedGenre == "Dram" && g.equals("Drama", ignoreCase = true)) } }
     }
 
-    val trendingItems = remember(filteredCatalog) { filteredCatalog.filter { it.rating >= 8.5f } }
+    val isLiveTrendingLoading by viewModel.isLiveTrendingLoading.collectAsState()
+
+    val trendingItems = remember(filteredCatalog) {
+        val liveItems = filteredCatalog.filter { it.id.startsWith("tmdb-trend-") || it.id.startsWith("tvmaze-popular-") }
+        if (liveItems.isNotEmpty()) liveItems else filteredCatalog.filter { it.rating >= 8.0f }
+    }
     val topRatedItems = remember(filteredCatalog) { filteredCatalog.sortedByDescending { it.rating } }
     val newThisWeek = remember(filteredCatalog) { filteredCatalog.filter { it.year >= 2025 } }
     val becauseYouWatched = remember(filteredCatalog) { filteredCatalog.filter { it.genres.any { g -> g == "Bilim Kurgu" || g == "Suç" || g == "Gerilim" } } }
@@ -399,11 +405,65 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Carousel 1: Trendler
-        SectionHeader(
-            title = "Trendler",
-            subtitle = "Şu an en çok konuşulan yapımlar"
-        )
+        // Carousel 1: Güncel Trendler (TMDB & TVMaze Canlı)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Güncel Trendler",
+                        color = TextPrimary,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = StatusWatched.copy(alpha = 0.2f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, StatusWatched)
+                    ) {
+                        Text(
+                            text = "TMDB & TVMAZE CANLI",
+                            color = StatusWatched,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Şu an dünyada en popüler güncel film ve diziler",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+            }
+
+            IconButton(
+                onClick = { viewModel.refreshLiveTrending(showToast = true) },
+                enabled = !isLiveTrendingLoading
+            ) {
+                if (isLiveTrendingLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = VioletPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Trendleri Canlı Yenile",
+                        tint = VioletLight
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp),

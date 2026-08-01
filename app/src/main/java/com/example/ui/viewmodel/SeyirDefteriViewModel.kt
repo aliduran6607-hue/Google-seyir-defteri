@@ -19,9 +19,22 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     private val db = AppDatabase.getDatabase(application)
     private val repository = MediaRepository(db.mediaDao())
 
-    // All items (merged catalog + user Room items)
-    val catalogState: StateFlow<List<MediaItem>> = repository.getFullCatalog()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CatalogData.initialCatalog)
+    // Live trending catalog fetched from TMDB and TVMaze
+    private val _liveTrendingCatalog = MutableStateFlow<List<MediaItem>>(emptyList())
+    private val _isLiveTrendingLoading = MutableStateFlow(false)
+    val isLiveTrendingLoading: StateFlow<Boolean> = _isLiveTrendingLoading.asStateFlow()
+
+    // All items (live TMDB/TVMaze trends + seed catalog + user Room items)
+    val catalogState: StateFlow<List<MediaItem>> = combine(
+        repository.getFullCatalog(),
+        _liveTrendingCatalog
+    ) { repoCatalog, liveTrends ->
+        if (liveTrends.isNotEmpty()) {
+            (liveTrends + repoCatalog).distinctBy { it.id }
+        } else {
+            repoCatalog
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CatalogData.initialCatalog)
 
     // User collection items (only items where watchStatus != null)
     val collectionState: StateFlow<List<MediaItem>> = catalogState.map { items ->
@@ -147,6 +160,23 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
             if (currentItemsCount == 0) {
                 importBackupJsonInternal(UserBackupData.initialUserBackupJson, showToast = false)
             }
+
+            // Automatically fetch real live trending content from TMDB & TVMaze on app launch
+            refreshLiveTrending(showToast = false)
+        }
+    }
+
+    fun refreshLiveTrending(showToast: Boolean = true) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLiveTrendingLoading.value = true
+            val liveTrends = TvmazeTmdbService.fetchLiveTrending(customTmdbKey.value.ifBlank { null })
+            if (liveTrends.isNotEmpty()) {
+                _liveTrendingCatalog.value = liveTrends
+                if (showToast) {
+                    _toastMessage.emit("TMDB & TVMaze: Güncel trend verileri canlı olarak çekildi (${liveTrends.size} içerik).")
+                }
+            }
+            _isLiveTrendingLoading.value = false
         }
     }
 
