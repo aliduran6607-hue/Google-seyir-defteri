@@ -115,15 +115,30 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     private val _isDarkMode = MutableStateFlow(true)
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
-    // User Profile & Admin States
+    // User Profile, Auth & Admin States
+    private val _isLoggedIn = MutableStateFlow(true)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
     private val _userEmail = MutableStateFlow("aliduran6607@gmail.com")
     val userEmail: StateFlow<String> = _userEmail.asStateFlow()
 
     private val _profileName = MutableStateFlow("Ali Duran")
     val profileName: StateFlow<String> = _profileName.asStateFlow()
 
+    private val _profileAvatar = MutableStateFlow("star:Yılmaz")
+    val profileAvatar: StateFlow<String> = _profileAvatar.asStateFlow()
+
     private val _isAdmin = MutableStateFlow(true)
     val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
+
+    fun updateProfileAvatar(avatarUrlOrPreset: String) {
+        if (avatarUrlOrPreset.isNotBlank()) {
+            _profileAvatar.value = avatarUrlOrPreset.trim()
+            viewModelScope.launch {
+                _toastMessage.emit("Profil resmi başarıyla güncellendi!")
+            }
+        }
+    }
 
     fun setNewEpisodeNotify(enabled: Boolean) {
         _newEpisodeNotify.value = enabled
@@ -183,6 +198,28 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     fun updateProfileName(name: String) {
         if (name.isNotBlank()) {
             _profileName.value = name.trim()
+        }
+    }
+
+    fun logout() {
+        _isLoggedIn.value = false
+        viewModelScope.launch {
+            _toastMessage.emit("Oturum kapatıldı. Başarıyla çıkış yaptınız.")
+        }
+    }
+
+    fun login(email: String, name: String = "") {
+        if (email.isNotBlank()) {
+            _userEmail.value = email.trim()
+        }
+        if (name.isNotBlank()) {
+            _profileName.value = name.trim()
+        } else if (email.contains("@")) {
+            _profileName.value = email.substringBefore("@").replaceFirstChar { it.uppercase() }
+        }
+        _isLoggedIn.value = true
+        viewModelScope.launch {
+            _toastMessage.emit("Hoş geldiniz, ${_profileName.value}!")
         }
     }
 

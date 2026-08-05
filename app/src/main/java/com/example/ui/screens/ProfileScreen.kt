@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,11 +30,35 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.SeyirDefteriViewModel
+
+data class StarAvatarModel(
+    val id: String,
+    val name: String,
+    val showTitle: String,
+    val emoji: String,
+    val initials: String,
+    val bgGradient: List<Color>
+)
+
+val STAR_AVATARS_LIST = listOf(
+    StarAvatarModel("star:Yılmaz", "Yılmaz", "Gibi (Feyyaz Yiğit)", "☕", "YY", listOf(Color(0xFF211B34), Color(0xFF7C3AED))),
+    StarAvatarModel("star:Agah Beyoglu", "Agâh Beyoğlu", "Şahsiyet (Haluk Bilginer)", "🕵️", "AB", listOf(Color(0xFF1E1E2E), Color(0xFFB45309))),
+    StarAvatarModel("star:Walter White", "Walter White", "Breaking Bad", "🧪", "WW", listOf(Color(0xFF0F172A), Color(0xFF059669))),
+    StarAvatarModel("star:Thomas Shelby", "Thomas Shelby", "Peaky Blinders", "🎩", "TS", listOf(Color(0xFF1E293B), Color(0xFF475569))),
+    StarAvatarModel("star:Wednesday", "Wednesday Addams", "Wednesday", "🖤", "WA", listOf(Color(0xFF020617), Color(0xFF312E81))),
+    StarAvatarModel("star:Batman", "Batman", "The Dark Knight", "🦇", "BM", listOf(Color(0xFF18181B), Color(0xFFD97706))),
+    StarAvatarModel("star:Joker", "Joker", "Arthur Fleck", "🃏", "JK", listOf(Color(0xFF831843), Color(0xFF059669))),
+    StarAvatarModel("star:Tyler Durden", "Tyler Durden", "Fight Club", "🧼", "TD", listOf(Color(0xFF701A75), Color(0xFFE11D48))),
+    StarAvatarModel("star:Eleven", "Eleven", "Stranger Things", "🧇", "EL", listOf(Color(0xFF4C1D95), Color(0xFFDB2777)))
+)
 
 @Composable
 fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
@@ -76,11 +101,28 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
         }
     }
 
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val profileName by viewModel.profileName.collectAsState()
+    val profileAvatar by viewModel.profileAvatar.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
     val isAdmin by viewModel.isAdmin.collectAsState()
     var showEditNameDialog by remember { mutableStateOf(false) }
+    var showAvatarDialog by remember { mutableStateOf(false) }
     var tempNameText by remember { mutableStateOf("") }
+    var customAvatarUrl by remember { mutableStateOf("") }
+    var showLogoutConfirmDialog by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.updateProfileAvatar(it.toString())
+        }
+    }
+
+    var inputEmail by remember { mutableStateOf("aliduran6607@gmail.com") }
+    var inputPassword by remember { mutableStateOf("123456") }
+    var inputName by remember { mutableStateOf("Ali Duran") }
 
     val newEpNotify by viewModel.newEpisodeNotify.collectAsState()
     val sequelNotify by viewModel.sequelMovieNotify.collectAsState()
@@ -91,6 +133,178 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
 
     LaunchedEffect(isDarkMode) {
         AppThemeState.isDark = isDarkMode
+    }
+
+    if (!isLoggedIn) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBackground)
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                border = androidx.compose.foundation.BorderStroke(1.dp, VioletPrimary.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(VioletPrimary, VioletLight))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Giriş Yap",
+                            tint = Color.White,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = if (selectedLang == "tr") "Seyir Defteri'ne Giriş Yap" else "Sign In to Seyir Defteri",
+                        color = TextPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = if (selectedLang == "tr") "Oturum açarak kişisel kütüphanenize erişin" else "Sign in to access your personal collection",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    // Google Fast Sign In Button
+                    Surface(
+                        onClick = {
+                            viewModel.login("aliduran6607@gmail.com", "Ali Duran")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color.White,
+                        shadowElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "G",
+                                color = Color(0xFF4285F4),
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = if (selectedLang == "tr") "Google ile Giriş Yap (aliduran6607@gmail.com)" else "Sign in with Google",
+                                color = Color(0xFF1F1F1F),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
+                        Text(
+                            text = if (selectedLang == "tr") " veya e-posta ile " else " or with email ",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = inputEmail,
+                        onValueChange = { inputEmail = it },
+                        label = { Text("E-posta Adresi") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = VioletPrimary,
+                            unfocusedBorderColor = DarkBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = inputPassword,
+                        onValueChange = { inputPassword = it },
+                        label = { Text("Şifre") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = VioletPrimary,
+                            unfocusedBorderColor = DarkBorder
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.login(inputEmail, inputName)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = VioletPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = if (selectedLang == "tr") "Giriş Yap" else "Sign In",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.login("misafir@seyirdefteri.app", "Misafir Kullanıcı")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                    ) {
+                        Text(
+                            text = if (selectedLang == "tr") "Misafir Girişi Yap" else "Continue as Guest",
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+        return
     }
 
     if (showEditNameDialog) {
@@ -143,12 +357,44 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Profil ve Ayarlar",
-            color = TextPrimary,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Profil ve Ayarlar",
+                color = TextPrimary,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Surface(
+                onClick = { showLogoutConfirmDialog = true },
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFD32F2F).copy(alpha = 0.15f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFD32F2F).copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Çıkış Yap",
+                        tint = Color(0xFFEF5350),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (selectedLang == "tr") "Çıkış Yap" else "Sign Out",
+                        color = Color(0xFFEF5350),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -163,24 +409,97 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Personal Avatar Circle Icon
+                // Personal Avatar Circle with Camera Overlay Badge
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(VioletPrimary, VioletLight)))
-                        .border(2.dp, VioletLight, CircleShape),
+                        .size(88.dp)
+                        .clickable { showAvatarDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profil Resmi",
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
+                    val starMatch = STAR_AVATARS_LIST.find { it.id == profileAvatar }
+                    val context = LocalContext.current
+
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (starMatch != null) Brush.linearGradient(starMatch.bgGradient)
+                                else Brush.linearGradient(listOf(VioletPrimary, VioletDark))
+                            )
+                            .border(2.5.dp, VioletLight, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (starMatch != null) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = starMatch.emoji,
+                                    fontSize = 28.sp
+                                )
+                                Text(
+                                    text = starMatch.initials,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        } else if (profileAvatar.isNotBlank()) {
+                            val imageRequest = remember(profileAvatar) {
+                                ImageRequest.Builder(context)
+                                    .data(profileAvatar)
+                                    .crossfade(true)
+                                    .build()
+                            }
+                            AsyncImage(
+                                model = imageRequest,
+                                contentDescription = "Profil Resmi",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profil Resmi",
+                                tint = Color.White,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
+                    }
+
+                    // Edit Photo Badge
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(VioletPrimary)
+                            .border(1.5.dp, DarkSurface, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Resmi Değiştir",
+                            tint = Color.White,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                TextButton(onClick = { showAvatarDialog = true }) {
+                    Text(
+                        text = if (selectedLang == "tr") "Profil Resmini Değiştir" else "Change Profile Picture",
+                        color = VioletLight,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -600,6 +919,47 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Account & Security Section
+        Text(
+            text = if (selectedLang == "tr") "Hesap ve Güvenlik" else "Account & Security",
+            color = TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            border = CardDefaults.outlinedCardBorder().copy(brush = Brush.linearGradient(listOf(DarkBorder, DarkBorder)))
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Button(
+                    onClick = { showLogoutConfirmDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Çıkış Yap",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (selectedLang == "tr") "Oturumu Kapat (Çıkış Yap)" else "Sign Out / Log Out",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         // App Info
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -611,6 +971,231 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                 Text(text = "Created by Muhammed Ali Duran", color = TextSecondary, fontSize = 11.sp)
             }
         }
+    }
+
+    // Logout Confirmation Dialog
+    if (showLogoutConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutConfirmDialog = false },
+            containerColor = DarkSurface,
+            title = {
+                Text(
+                    text = if (selectedLang == "tr") "Oturumu Kapat" else "Sign Out",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (selectedLang == "tr") "Seyir Defteri hesabınızdan çıkış yapmak istediğinize emin misiniz?" else "Are you sure you want to sign out of Seyir Defteri?",
+                    color = TextSecondary,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutConfirmDialog = false
+                        viewModel.logout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                ) {
+                    Text(text = if (selectedLang == "tr") "Çıkış Yap" else "Sign Out", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutConfirmDialog = false }) {
+                    Text(text = if (selectedLang == "tr") "İptal" else "Cancel", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    // Profile Avatar Selection Dialog
+    if (showAvatarDialog) {
+        AlertDialog(
+            onDismissRequest = { showAvatarDialog = false },
+            containerColor = DarkSurface,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.CameraAlt, contentDescription = null, tint = VioletPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (selectedLang == "tr") "Profil Resmi Seç" else "Select Profile Picture",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Gallery Picker Option
+                    Button(
+                        onClick = {
+                            showAvatarDialog = false
+                            photoPickerLauncher.launch("image/*")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = VioletPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PhotoLibrary,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (selectedLang == "tr") "Cihazımdan / Galeriden Seç" else "Pick Photo from Gallery",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
+                        Text(
+                            text = if (selectedLang == "tr") " veya hazır avatar seç " else " or choose avatar ",
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 6.dp)
+                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
+                    }
+
+                    Text(
+                        text = if (selectedLang == "tr") "🎬 Film & Dizi Yıldızları Avatarları:" else "🎬 Movie & TV Star Avatars:",
+                        color = TextPrimary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // 3-column Grid of Movie & TV Stars
+                    STAR_AVATARS_LIST.chunked(3).forEach { rowStars ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            rowStars.forEach { star ->
+                                val isSelected = profileAvatar == star.id
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(4.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isSelected) VioletPrimary.copy(alpha = 0.25f) else DarkBackground)
+                                        .border(
+                                            width = if (isSelected) 2.dp else 1.dp,
+                                            color = if (isSelected) VioletPrimary else DarkBorder,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            viewModel.updateProfileAvatar(star.id)
+                                            showAvatarDialog = false
+                                        }
+                                        .padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .clip(CircleShape)
+                                            .background(Brush.linearGradient(star.bgGradient))
+                                            .border(1.5.dp, if (isSelected) VioletPrimary else VioletLight, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = star.emoji,
+                                                fontSize = 20.sp
+                                            )
+                                            Text(
+                                                text = star.initials,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 9.sp
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = star.name,
+                                        color = TextPrimary,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Text(
+                                        text = star.showTitle,
+                                        color = TextSecondary,
+                                        fontSize = 9.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+
+                            repeat(3 - rowStars.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+
+                    // Custom URL Input
+                    OutlinedTextField(
+                        value = customAvatarUrl,
+                        onValueChange = { customAvatarUrl = it },
+                        label = { Text(if (selectedLang == "tr") "Fotoğraf Bağlantısı (URL)" else "Photo Image URL", fontSize = 11.sp) },
+                        placeholder = { Text("https://...", fontSize = 11.sp, color = TextMuted) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = VioletPrimary,
+                            unfocusedBorderColor = DarkBorder,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
+                    )
+
+                    if (customAvatarUrl.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                viewModel.updateProfileAvatar(customAvatarUrl)
+                                showAvatarDialog = false
+                                customAvatarUrl = ""
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = VioletLight),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("URL Fotoğrafını Kaydet", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showAvatarDialog = false }) {
+                    Text(text = if (selectedLang == "tr") "İptal" else "Cancel", color = TextSecondary)
+                }
+            }
+        )
     }
 
     // JSON Export / Import Dialog
