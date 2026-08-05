@@ -125,7 +125,7 @@ class SeyirDefteriViewModel(application: Application) : AndroidViewModel(applica
     private val _profileName = MutableStateFlow("Ali Duran")
     val profileName: StateFlow<String> = _profileName.asStateFlow()
 
-    private val _profileAvatar = MutableStateFlow("star:Yılmaz")
+    private val _profileAvatar = MutableStateFlow("")
     val profileAvatar: StateFlow<String> = _profileAvatar.asStateFlow()
 
     private val _isAdmin = MutableStateFlow(true)

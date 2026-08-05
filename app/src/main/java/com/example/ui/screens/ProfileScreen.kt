@@ -39,27 +39,6 @@ import coil.request.ImageRequest
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.SeyirDefteriViewModel
 
-data class StarAvatarModel(
-    val id: String,
-    val name: String,
-    val showTitle: String,
-    val emoji: String,
-    val initials: String,
-    val bgGradient: List<Color>
-)
-
-val STAR_AVATARS_LIST = listOf(
-    StarAvatarModel("star:Yılmaz", "Yılmaz", "Gibi (Feyyaz Yiğit)", "☕", "YY", listOf(Color(0xFF211B34), Color(0xFF7C3AED))),
-    StarAvatarModel("star:Agah Beyoglu", "Agâh Beyoğlu", "Şahsiyet (Haluk Bilginer)", "🕵️", "AB", listOf(Color(0xFF1E1E2E), Color(0xFFB45309))),
-    StarAvatarModel("star:Walter White", "Walter White", "Breaking Bad", "🧪", "WW", listOf(Color(0xFF0F172A), Color(0xFF059669))),
-    StarAvatarModel("star:Thomas Shelby", "Thomas Shelby", "Peaky Blinders", "🎩", "TS", listOf(Color(0xFF1E293B), Color(0xFF475569))),
-    StarAvatarModel("star:Wednesday", "Wednesday Addams", "Wednesday", "🖤", "WA", listOf(Color(0xFF020617), Color(0xFF312E81))),
-    StarAvatarModel("star:Batman", "Batman", "The Dark Knight", "🦇", "BM", listOf(Color(0xFF18181B), Color(0xFFD97706))),
-    StarAvatarModel("star:Joker", "Joker", "Arthur Fleck", "🃏", "JK", listOf(Color(0xFF831843), Color(0xFF059669))),
-    StarAvatarModel("star:Tyler Durden", "Tyler Durden", "Fight Club", "🧼", "TD", listOf(Color(0xFF701A75), Color(0xFFE11D48))),
-    StarAvatarModel("star:Eleven", "Eleven", "Stranger Things", "🧇", "EL", listOf(Color(0xFF4C1D95), Color(0xFFDB2777)))
-)
-
 @Composable
 fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
     val context = LocalContext.current
@@ -416,37 +395,17 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                         .clickable { showAvatarDialog = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    val starMatch = STAR_AVATARS_LIST.find { it.id == profileAvatar }
                     val context = LocalContext.current
 
                     Box(
                         modifier = Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(
-                                if (starMatch != null) Brush.linearGradient(starMatch.bgGradient)
-                                else Brush.linearGradient(listOf(VioletPrimary, VioletDark))
-                            )
+                            .background(Brush.linearGradient(listOf(VioletPrimary, VioletDark)))
                             .border(2.5.dp, VioletLight, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (starMatch != null) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = starMatch.emoji,
-                                    fontSize = 28.sp
-                                )
-                                Text(
-                                    text = starMatch.initials,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        } else if (profileAvatar.isNotBlank()) {
+                        if (profileAvatar.isNotBlank()) {
                             val imageRequest = remember(profileAvatar) {
                                 ImageRequest.Builder(context)
                                     .data(profileAvatar)
@@ -1062,99 +1021,12 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
                         Text(
-                            text = if (selectedLang == "tr") " veya hazır avatar seç " else " or choose avatar ",
+                            text = if (selectedLang == "tr") " veya " else " or ",
                             color = TextSecondary,
                             fontSize = 11.sp,
                             modifier = Modifier.padding(horizontal = 6.dp)
                         )
                         HorizontalDivider(modifier = Modifier.weight(1f), color = DarkBorder)
-                    }
-
-                    Text(
-                        text = if (selectedLang == "tr") "🎬 Film & Dizi Yıldızları Avatarları:" else "🎬 Movie & TV Star Avatars:",
-                        color = TextPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    // 3-column Grid of Movie & TV Stars
-                    STAR_AVATARS_LIST.chunked(3).forEach { rowStars ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            rowStars.forEach { star ->
-                                val isSelected = profileAvatar == star.id
-                                Column(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(4.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isSelected) VioletPrimary.copy(alpha = 0.25f) else DarkBackground)
-                                        .border(
-                                            width = if (isSelected) 2.dp else 1.dp,
-                                            color = if (isSelected) VioletPrimary else DarkBorder,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable {
-                                            viewModel.updateProfileAvatar(star.id)
-                                            showAvatarDialog = false
-                                        }
-                                        .padding(8.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(56.dp)
-                                            .clip(CircleShape)
-                                            .background(Brush.linearGradient(star.bgGradient))
-                                            .border(1.5.dp, if (isSelected) VioletPrimary else VioletLight, CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = star.emoji,
-                                                fontSize = 20.sp
-                                            )
-                                            Text(
-                                                text = star.initials,
-                                                color = Color.White,
-                                                fontWeight = FontWeight.Black,
-                                                fontSize = 9.sp
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    Text(
-                                        text = star.name,
-                                        color = TextPrimary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        textAlign = TextAlign.Center
-                                    )
-
-                                    Text(
-                                        text = star.showTitle,
-                                        color = TextSecondary,
-                                        fontSize = 9.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-
-                            repeat(3 - rowStars.size) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
                     }
 
                     // Custom URL Input
@@ -1185,6 +1057,23 @@ fun ProfileScreen(viewModel: SeyirDefteriViewModel) {
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Text("URL Fotoğrafını Kaydet", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    if (profileAvatar.isNotBlank()) {
+                        TextButton(
+                            onClick = {
+                                viewModel.updateProfileAvatar("")
+                                showAvatarDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = if (selectedLang == "tr") "Mevcut Resmi Kaldır" else "Remove Current Photo",
+                                color = Color(0xFFEF5350),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
